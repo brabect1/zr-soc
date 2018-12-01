@@ -11,18 +11,47 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// 
+// Change log:
+//     2018, Sep., Tomas Brabec
+//     - Created.
 
+
+// The coreplex integrates a zeroriscy core and tightly coupled interfaces.
 module zr_coreplex #(
     parameter int RV32E = 0,
     parameter int RV32M = 1,
+    parameter bit[200*8-1:0] TCM_INIT_FILE = '0,           // Specify name/location of RAM initialization file if using one (leave blank if not)
     parameter logic[31:0] TCM_ADDR_BASE = 32'h8000_0000,
-    parameter logic[31:0] TCM_ADDR_MASK = 32'h0000_3fff,
+//    parameter logic[31:0] TCM_ADDR_MASK = 32'h0000_3fff,
+    parameter int TCM_AWIDTH = 15, // number of address LSBs to use for TCM addressing
     parameter logic[31:0] BOOT_ADDR = TCM_ADDR_BASE
 ) (
     input  logic        irq_i,                 // level sensitive IR lines
     input  logic [4:0]  irq_id_i,
     output logic        irq_ack_o,             // irq ack
     output logic [4:0]  irq_id_o,
+
+    // Instruction peripheral bus
+    output logic       pi_icb_cmd_valid,
+    input  logic       pi_icb_cmd_ready,
+    output logic[31:0] pi_icb_cmd_addr,
+    input  logic       pi_icb_rsp_valid,
+    output logic       pi_icb_rsp_ready,
+    input  logic[31:0] pi_icb_rsp_rdata,
+    input  logic       pi_icb_rsp_err,
+
+    // Data peripheral bus
+    output logic       pd_icb_cmd_valid,
+    input  logic       pd_icb_cmd_ready,
+    output logic       pd_icb_cmd_read,
+    output logic[31:0] pd_icb_cmd_addr,
+    output logic[31:0] pd_icb_cmd_wdata,
+    output logic[ 3:0] pd_icb_cmd_wmask,
+    input  logic       pd_icb_rsp_valid,
+    output logic       pd_icb_rsp_ready,
+    input  logic[31:0] pd_icb_rsp_rdata,
+    input  logic       pd_icb_rsp_err,
 
     input  logic clk,
     input  logic rst_n
@@ -47,9 +76,9 @@ logic [31:0] data_rdata_i;
 logic        data_err_i;
 
 // Other
-logic dbg_irq;
-logic dm_dbg_irq;
-logic dtm_dbg_ien;
+logic [1:0] dbg_irq;
+logic [1:0] dm_dbg_irq;
+logic [1:0] dtm_dbg_ien;
 
 assign dbg_irq = dm_dbg_irq & dtm_dbg_ien;
 
@@ -91,7 +120,7 @@ zeroriscy_core #(
     .debug_resume_i(1'b0),
 
     // Debug interface (RV)
-    .dbg_irq( dbg_irq ),
+    .dbg_irq( dbg_irq[0] ),
 
     // CPU Control Signals
     .fetch_enable_i(1'b1),
@@ -118,7 +147,8 @@ logic        tcm_data_rvalid_i;
 logic [31:0] tcm_data_rdata_i;
 logic        tcm_data_err_i;
 
-localparam int TCM_AWIDTH = $countones(TCM_ADDR_MASK);
+//localparam int TCM_AWIDTH = $countones(TCM_ADDR_MASK);
+localparam logic[31:0] TCM_ADDR_MASK = {TCM_AWIDTH{1'b1}};
 
 assign tcm_instr_cs = instr_req_o & ((instr_addr_o & ~TCM_ADDR_MASK) == (TCM_ADDR_BASE & ~TCM_ADDR_MASK));
 assign tcm_data_cs = data_req_o & ((data_addr_o & ~TCM_ADDR_MASK) == (TCM_ADDR_BASE & ~TCM_ADDR_MASK));
@@ -141,8 +171,8 @@ end
 dp_ram #(
     .NB_COL(4),
     .COL_WIDTH(8),
-    .AWIDTH(TCM_AWIDTH-1),
-    .INIT_FILE("")
+    .INIT_FILE(TCM_INIT_FILE),
+    .AWIDTH(TCM_AWIDTH-1)
 ) u_tcm_ram (
     .addra(instr_addr_o[TCM_AWIDTH:2]),
     .addrb(data_addr_o[TCM_AWIDTH:2]),
@@ -222,7 +252,9 @@ always_ff @(posedge clk or negedge rst_n) begin
     end
 end
 
-icb2debug_bus u_icb2dm (
+icb2debug_bus #(
+    .HART_NUM(2)
+) u_icb2dm (
     .icb_cmd_valid( dtm_cmd_valid ),
     .icb_cmd_ready( dtm_cmd_ready ),
     .icb_cmd_addr(  data_addr_o[11:0] ),
@@ -337,18 +369,95 @@ riscv_dm_0p11 #(
 );
 
 // ----------------------------------------------
+// Peripheral Subsystem
+// ----------------------------------------------
+logic       perip_instr_gnt_i;
+logic       perip_instr_rvalid_i;
+logic[31:0] perip_instr_rdata_i;
+
+logic       perip_data_gnt_i;
+logic       perip_data_rvalid_i;
+logic[31:0] perip_data_rdata_i;
+logic       perip_data_err_i;
+
+cpu2icb #(
+    .ADDR_BASE(32'h2000_0000),
+    .ADDR_MASK(32'h1fff_ffff)
+) u_cpu2pi (
+    // ICB interface
+    .icb_cmd_valid( pi_icb_cmd_valid ),
+    .icb_cmd_ready( pi_icb_cmd_ready ),
+    .icb_cmd_read (   ),
+    .icb_cmd_addr ( pi_icb_cmd_addr  ),
+    .icb_cmd_wdata(  ),
+    .icb_cmd_wmask(  ),
+    .icb_rsp_valid( pi_icb_rsp_valid ),
+    .icb_rsp_ready( pi_icb_rsp_ready ),
+    .icb_rsp_rdata( pi_icb_rsp_rdata ),
+
+    // CPU interface
+    .data_req   ( instr_req_o ),
+    .data_we    ( 1'b0 ),
+    .data_be    ( 4'hf ),
+    .data_addr  ( instr_addr_o ),
+    .data_wdata ( '0 ),
+    .data_gnt   ( perip_instr_gnt_i ),
+    .data_rvalid( perip_instr_rvalid_i ),
+    .data_rdata ( perip_instr_rdata_i ),
+    .data_err   (  ),
+
+    // others
+    .clk( clk ),
+    .rst_n( rst_n )
+);
+
+cpu2icb #(
+    .ADDR_BASE(32'h1000_0000),
+    .ADDR_MASK(32'h0fff_ffff)
+) u_cpu2pd (
+    // ICB interface
+    .icb_cmd_valid( pd_icb_cmd_valid ),
+    .icb_cmd_ready( pd_icb_cmd_ready ),
+    .icb_cmd_read ( pd_icb_cmd_read  ),
+    .icb_cmd_addr ( pd_icb_cmd_addr  ),
+    .icb_cmd_wdata( pd_icb_cmd_wdata ),
+    .icb_cmd_wmask( pd_icb_cmd_wmask ),
+    .icb_rsp_valid( pd_icb_rsp_valid ),
+    .icb_rsp_ready( pd_icb_rsp_ready ),
+    .icb_rsp_rdata( pd_icb_rsp_rdata ),
+
+    // CPU interface
+    .data_req   ( data_req_o ),
+    .data_we    ( data_we_o ),
+    .data_be    ( data_be_o ),
+    .data_addr  ( data_addr_o ),
+    .data_wdata ( data_wdata_o ),
+    .data_gnt   ( perip_data_gnt_i ),
+    .data_rvalid( perip_data_rvalid_i ),
+    .data_rdata ( perip_data_rdata_i ),
+    .data_err   ( perip_data_err_i ),
+
+    // others
+    .clk( clk ),
+    .rst_n( rst_n )
+);
+
+// ----------------------------------------------
 // Instruction Memory Interface Aggregation
 // ----------------------------------------------
 
-assign instr_gnt_i = 
+assign instr_gnt_i =
+    perip_instr_gnt_i |
     tcm_instr_gnt_i |
     dm_instr_gnt_i;
 
 assign instr_rvalid_i =
+    perip_instr_rvalid_i |
     tcm_instr_rvalid_i |
     dm_instr_rvalid_i;
 
 assign instr_rdata_i =
+    (perip_instr_rdata_i & {32{perip_instr_rvalid_i}}) |
     (tcm_instr_rdata_i & {32{tcm_instr_rvalid_i}}) |
     (dm_instr_rdata_i & {32{dm_instr_rvalid_i}});
 
@@ -357,21 +466,25 @@ assign instr_rdata_i =
 // ----------------------------------------------
 
 assign data_gnt_i =
+    perip_data_gnt_i |
     tcm_data_gnt_i |
     dm_data_gnt_i |
     dtm_data_gnt_i;
 
 assign data_rvalid_i =
+    perip_data_rvalid_i |
     tcm_data_rvalid_i |
     dm_data_rvalid_i |
     dtm_data_rvalid_i;
 
 assign data_rdata_i =
+    (perip_data_rdata_i & {32{perip_data_rvalid_i}}) |
     (tcm_data_rdata_i & {32{tcm_data_rvalid_i}}) |
     (dm_data_rdata_i & {32{dm_data_rvalid_i}}) |
     (dtm_data_rdata_i & {32{dtm_data_rvalid_i}});
 
 assign data_err_i =
+    perip_data_err_i |
     tcm_data_err_i |
     dm_data_err_i |
     dtm_data_err_i;
@@ -380,10 +493,11 @@ endmodule: zr_coreplex
 
 
 module dp_ram #(
+//    parameter string INIT_FILE = ""           // Specify name/location of RAM initialization file if using one (leave blank if not)
+    parameter bit[200*8-1:0] INIT_FILE = '0,           // Specify name/location of RAM initialization file if using one (leave blank if not)
     parameter int NB_COL,                     // Specify number of columns (number of bytes)
     parameter int COL_WIDTH,                  // Specify column width (byte width, typically 8 or 9)
-    parameter int AWIDTH,                  // Specify RAM depth (number of entries)
-    parameter string INIT_FILE = ""           // Specify name/location of RAM initialization file if using one (leave blank if not)
+    parameter int AWIDTH                   // Specify RAM depth (number of entries)
 ) (
     input  logic [AWIDTH-1:0] addra,  // Port A address bus, width determined from RAM_DEPTH
     input  logic [AWIDTH-1:0] addrb,  // Port B address bus, width determined from RAM_DEPTH
@@ -402,9 +516,11 @@ module dp_ram #(
     logic [(NB_COL*COL_WIDTH)-1:0] mem [2**AWIDTH-1:0];
 
     // The following code either initializes the memory values to a specified file or to all zeros to match hardware
-    if (INIT_FILE != "") begin: use_init_file
+//    if (INIT_FILE != "") begin: use_init_file
+    if (|INIT_FILE != 1'b0) begin: use_init_file
         initial
-            $readmemh(INIT_FILE, mem, 0, 2**AWIDTH-1);
+            $readmemh(INIT_FILE, mem);
+//            $readmemh(INIT_FILE, mem, 0, 2**AWIDTH-1);
     end else begin: init_bram_to_zero
         integer ram_index;
         initial begin
@@ -436,3 +552,62 @@ module dp_ram #(
     end
 
 endmodule: dp_ram
+
+
+module cpu2icb #(
+    parameter logic[31:0] ADDR_BASE,
+    parameter logic[31:0] ADDR_MASK
+) (
+    // ICB interface
+    output logic       icb_cmd_valid,
+    input  logic       icb_cmd_ready,
+    output logic       icb_cmd_read,
+    output logic[31:0] icb_cmd_addr,
+    output logic[31:0] icb_cmd_wdata,
+    output logic[ 3:0] icb_cmd_wmask,
+    input  logic       icb_rsp_valid,
+    output logic       icb_rsp_ready,
+    input  logic[31:0] icb_rsp_rdata,
+
+    // CPU interface
+    input  logic       data_req,
+    input  logic       data_we,
+    input  logic[3:0]  data_be,
+    input  logic[31:0] data_addr,
+    input  logic[31:0] data_wdata,
+    output logic       data_gnt,
+    output logic       data_rvalid,
+    output logic[31:0] data_rdata,
+    output logic       data_err,
+
+    // others
+    input  logic       clk,
+    input  logic       rst_n
+);
+
+logic data_cs;
+
+assign data_cs = data_req & ((data_addr & ~ADDR_MASK) == (ADDR_BASE & ~ADDR_MASK));
+
+assign data_err = 1'b0;
+assign data_gnt = icb_cmd_valid & icb_cmd_ready;
+
+assign icb_rsp_ready = 1'b1;
+assign icb_cmd_valid = data_cs;
+assign icb_cmd_read = ~data_we;
+assign icb_cmd_wdata = data_wdata;
+assign icb_cmd_wmask = data_be;
+assign icb_cmd_addr  = data_addr;
+
+always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        data_rvalid <= 1'b0;
+        data_rdata <= '0;
+    end
+    else begin
+        data_rvalid <= icb_rsp_valid & icb_rsp_ready;
+        data_rdata <= (icb_rsp_valid & icb_rsp_ready) ? icb_rsp_rdata : '0;
+    end
+end
+
+endmodule: cpu2icb
