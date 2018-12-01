@@ -1,0 +1,6 @@
+[submodule "ip/riscv_jtag_dm"]
+	path = ip/riscv_jtag_dm
+	url = https://github.com/brabect1/riscv_jtag_dm
+[submodule "ip/zero-riscy"]
+	path = ip/zero-riscy
+	url = https://github.com/brabect1/zero-riscy
