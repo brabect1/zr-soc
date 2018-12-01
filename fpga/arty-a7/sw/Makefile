@@ -49,6 +49,11 @@ dummy:
 	sed -i 's/@200/@000/g' $@
 	sed -i 's/@00002FB8/@00002000/g' $@
 
+# The original Verilog dump is organized by bytes, while TCM is organized by words.
+# Hence we need to group data by words and change byte addresses to word addresses.
+# To do hexadecimal arithmetic in Bash, use `((...))`, but the result is decimal. Then
+# use `printf "%X"` to get hexadecimal again. Also watch out for `\r` that appears at
+# the end of the line in the original Verilog dump.
 %.bram_tcm: %.verilog
-	while read -r l; do if [[ $$l =~ ^@ ]]; then echo $$l; continue; fi; i=0; k=""; for ll in $$l; do k="$${ll}$${k}"; (( i+=1 )); if (( i > 3 )); then i=0; echo $$k; k=""; fi; done; done < $< > $@
+	while read -r l; do if [[ $$l =~ ^@ ]]; then l=$${l/@/0x}; printf "@%X\n" $$(( $${l/$$'\r'} / 4 )); continue; fi; i=0; k=""; for ll in $$l; do k="$${ll}$${k}"; (( i+=1 )); if (( i > 3 )); then i=0; echo $$k; k=""; fi; done; done < $< > $@
 
