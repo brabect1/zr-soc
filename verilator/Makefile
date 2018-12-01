@@ -19,7 +19,8 @@ vsrc = tb_verilator.sv spi_model.sv \
        $(vdir)/zero-riscy/include/zeroriscy_defines.sv \
        $(filter-out $(vdir)/zero-riscy/zeroriscy_register_file%,$(wildcard $(vdir)/*.*v* $(vdir)/zero-riscy/*.*v* $(vdir)/pulpino/*.*v*)) \
        $(vdir)/zero-riscy/zeroriscy_register_file_ff.sv \
-       $(wildcard $(vdir)/dm/*.*v*)
+       $(wildcard $(vdir)/riscv_jtag_dm/*.*v*) \
+       $(wildcard $(vdir)/perips/*.*v*)
 csrc = sim.cpp
 cflags =
 objdir = obj
