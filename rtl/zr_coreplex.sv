@@ -107,7 +107,7 @@ zeroriscy_core #(
     .irq_ack_o( irq_ack_o ),             // irq ack
     .irq_id_o( irq_id_o ),
 
-    // Debug Interface (legacy)
+    // Debug Interface (legacy) - tied off
     .debug_req_i(1'b0),
     .debug_gnt_o(),
     .debug_rvalid_o(),
@@ -119,8 +119,8 @@ zeroriscy_core #(
     .debug_halt_i(1'b0),
     .debug_resume_i(1'b0),
 
-    // Debug interface (RV)
-    .dbg_irq( dbg_irq[0] ),
+//TODO    // Debug interface (RV)
+//TODO    .dbg_irq( dbg_irq[0] ),
 
     // CPU Control Signals
     .fetch_enable_i(1'b1),
