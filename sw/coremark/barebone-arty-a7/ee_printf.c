@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <coremark.h>
 #include <stdarg.h>
+#include "platform.h"
 
 #define ZEROPAD  	(1<<0)	/* Pad with zero */
 #define SIGN    	(1<<1)	/* Unsigned/signed long */
@@ -560,8 +561,12 @@ repeat:
   return str - buf;
 }
 
+
 void uart_send_char(char c) {
 //#error "You must implement the method uart_send_char to use this file!\n";
+    while (UART0_REG(UART_REG_TXFIFO) & 0x80000000) ;
+    UART0_REG(UART_REG_TXFIFO) = c;
+    while (UART0_REG(UART_REG_TXFIFO) & 0x80000000) ;
 /*	Output of a char to a UART usually follows the following model:
 	Wait until UART is ready
 	Write char to UART

@@ -111,7 +111,15 @@ ee_u32 default_num_contexts=1;
 void portable_init(core_portable *p, int *argc, char *argv[])
 {
 //	#error "Call board initialization routines in portable init (if needed), in particular initialize UART!\n"
-	if (sizeof(ee_ptr_int) != sizeof(ee_u8 *)) {
+    ee_u32 baud_rate = 115200;
+    ee_u32 cpu_freq = 10000000;
+
+    GPIO_REG(GPIO_IOF_SEL) &= ~IOF0_UART0_MASK;
+    GPIO_REG(GPIO_IOF_EN) |= IOF0_UART0_MASK;
+    UART0_REG(UART_REG_DIV) = cpu_freq / baud_rate - 1;
+    UART0_REG(UART_REG_TXCTRL) |= UART_TXEN;
+
+    if (sizeof(ee_ptr_int) != sizeof(ee_u8 *)) {
 		ee_printf("ERROR! Please define ee_ptr_int to a type that holds a pointer!\n");
 	}
 	if (sizeof(ee_u32) != 4) {
