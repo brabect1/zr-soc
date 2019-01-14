@@ -17,6 +17,7 @@ Original Author: Shay Gal-on
 */
 #include "coremark.h"
 #include "core_portme.h"
+#include "platform.h"
 
 #if VALIDATION_RUN
 	volatile ee_s32 seed1_volatile=0x3415;
@@ -112,11 +113,10 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 {
 //	#error "Call board initialization routines in portable init (if needed), in particular initialize UART!\n"
     ee_u32 baud_rate = 115200;
-    ee_u32 cpu_freq = 10000000;
 
     GPIO_REG(GPIO_IOF_SEL) &= ~IOF0_UART0_MASK;
     GPIO_REG(GPIO_IOF_EN) |= IOF0_UART0_MASK;
-    UART0_REG(UART_REG_DIV) = cpu_freq / baud_rate - 1;
+    UART0_REG(UART_REG_DIV) = CLOCKS_PER_SEC / baud_rate + 1;
     UART0_REG(UART_REG_TXCTRL) |= UART_TXEN;
 
     if (sizeof(ee_ptr_int) != sizeof(ee_u8 *)) {
