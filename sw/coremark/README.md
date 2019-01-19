@@ -3,7 +3,14 @@
 
 CoreMark's primary goals are simplicity and providing a method for testing only a processor's core features. For more information about EEMBC's comprehensive embedded benchmark suites, please see www.eembc.org.
 
-# Building and Running
+# Building and Running (zr-soc)
+
+```
+# Build a barebone version
+> make link PORT_DIR=barebone-arty-a7 CC=$RISCV_GCC LD=$RISCV_GCC
+```
+
+# Building and Running (General)
 	
 To build and run the benchmark, type 
 
