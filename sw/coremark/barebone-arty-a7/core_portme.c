@@ -42,8 +42,11 @@ Original Author: Shay Gal-on
 	Sample implementation for standard time.h and windows.h definitions included.
 */
 CORETIMETYPE barebones_clock() {
-    return 100000;
 //	#error "You must implement a method to measure time in barebones_clock()! This function should return current time.\n"
+    ee_u32 res;
+    asm("csrr %[_res],0x780"
+            : [_res] "=r" (res));
+    return (CORETIMETYPE)res;
 }
 /* Define : TIMER_RES_DIVIDER
 	Divider to trade off timer resolution and total time that can be measured.
@@ -57,6 +60,9 @@ CORETIMETYPE barebones_clock() {
 #define SAMPLE_TIME_IMPLEMENTATION 1
 #define CLOCKS_PER_SEC 100000000
 #define EE_TICKS_PER_SEC (CLOCKS_PER_SEC / TIMER_RES_DIVIDER)
+#ifndef BAUD_RATE
+#define BAUD_RATE 115200
+#endif
 
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
@@ -112,11 +118,9 @@ ee_u32 default_num_contexts=1;
 void portable_init(core_portable *p, int *argc, char *argv[])
 {
 //	#error "Call board initialization routines in portable init (if needed), in particular initialize UART!\n"
-    ee_u32 baud_rate = 115200;
-
     GPIO_REG(GPIO_IOF_SEL) &= ~IOF0_UART0_MASK;
     GPIO_REG(GPIO_IOF_EN) |= IOF0_UART0_MASK;
-    UART0_REG(UART_REG_DIV) = CLOCKS_PER_SEC / baud_rate + 1;
+    UART0_REG(UART_REG_DIV) = CLOCKS_PER_SEC / BAUD_RATE + 1;
     UART0_REG(UART_REG_TXCTRL) |= UART_TXEN;
 
     if (sizeof(ee_ptr_int) != sizeof(ee_u8 *)) {
@@ -126,6 +130,10 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 		ee_printf("ERROR! Please define ee_u32 to a 32b unsigned type!\n");
 	}
 	p->portable_id=1;
+
+    // start performance cycle counter
+    asm("csrwi 0x7A1,3\n\t"
+        "csrwi 0x7A0,1");
 }
 /* Function : portable_fini
 	Target specific final code 
