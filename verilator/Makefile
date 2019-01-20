@@ -15,7 +15,7 @@
 SHELL=bash
 
 vdir = ../rtl
-vsrc = tb_verilator.sv spi_model.sv \
+vsrc = tb_verilator.sv spi_model.sv uart_model.sv \
        $(vdir)/zero-riscy/include/zeroriscy_defines.sv \
        $(filter-out $(vdir)/zero-riscy/zeroriscy_register_file%,$(wildcard $(vdir)/*.*v* $(vdir)/zero-riscy/*.*v* $(vdir)/pulpino/*.*v*)) \
        $(vdir)/zero-riscy/zeroriscy_register_file_ff.sv \

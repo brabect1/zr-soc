@@ -27,9 +27,16 @@ Changelog:
 */
 
 module tb_verilator(
-    input wire  clk,
-    input wire  rst_n
+    output logic uart_rx_rdy,
+    output logic uart_rx_err,
+    output int   uart_rx_data,
+    input  wire  clk,
+    input  wire  rst_n
 );
+
+`ifndef TCM_AWIDTH
+`define TCM_AWIDTH 16
+`endif
 
 //`define TCM_INIT_FILE "/tmp/github/zr/bram_init.txt"
 `define CPU_TOP u_soc.u_cpu.u_core
@@ -41,6 +48,18 @@ module tb_verilator(
 `define PC_SFT_IRQ_BEFOR_MRET 32'h000000be
 `define PC_TMR_IRQ_BEFOR_MRET 32'h000000d6
 `define PC_AFTER_SETMTVEC     32'h0000015C
+
+`ifndef UART_BAUD_CLOCKS
+`define UART_BAUD_CLOCKS 2
+`endif
+
+`ifndef UART_BITS
+`define UART_BITS 8
+`endif
+
+`ifndef UART_STOPS
+`define UART_STOPS 1
+`endif
 
 wire [31:0] x3 = `CPU_TOP.id_stage_i.registers_i.rf_reg[3];
 wire [31:0] pc = `CPU_TOP.pc_id;
@@ -143,7 +162,7 @@ always @(posedge clk) begin
 end
 
 
-logic [7:0] itcm_mem [0:2**14-1];
+logic [7:0] itcm_mem [0:2**`TCM_AWIDTH-1];
 
 initial begin
     $display("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");  
@@ -231,7 +250,7 @@ zr_soc #(
 `endif
     .TCM_ADDR_BASE(32'h8000_0000),
 //    .TCM_ADDR_MASK(32'h0000_3fff),
-    .TCM_AWIDTH(15),
+    .TCM_AWIDTH(`TCM_AWIDTH),
     .BOOT_ADDR(32'h8000_0000)
 ) u_soc (
     .irq_i(irq_i),
@@ -284,5 +303,20 @@ always @(posedge clk or negedge rst_n) begin
         end
     end
 end
+
+
+uart_model u_uart (
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .ctrl_baud_clks(`UART_BAUD_CLOCKS),
+    .ctrl_bits(`UART_BITS),
+    .ctrl_stops(`UART_STOPS),
+
+    .rxd(uart_txd),
+    .rx_rdy(uart_rx_rdy),
+    .rx_err(uart_rx_err),
+    .rx_data(uart_rx_data)
+);
 
 endmodule

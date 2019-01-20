@@ -35,6 +35,8 @@ int main(int argc, char **argv, char **env) {
 	Vtb_verilator* top = new Vtb_verilator;
 	int cnt;
 	simtime = 0;
+    std::string uart_rx_str;
+    int uart_rx_errs = 0;
 
 #if VM_TRACE
 	Verilated::traceEverOn(true);
@@ -67,6 +69,15 @@ int main(int argc, char **argv, char **env) {
 	simtime++;
 
 	while (!Verilated::gotFinish() && cnt < (1 << 17)) {
+        // check UART for new data
+        if (top->uart_rx_rdy) {
+            if (top->uart_rx_err) {
+                uart_rx_errs++;
+            } else {
+                uart_rx_str.append(1,(char)top->uart_rx_data);
+            }
+        }
+
 		top->clk = 1;
 		top->eval();
 #if VM_TRACE && VCDTRACE
@@ -89,6 +100,9 @@ int main(int argc, char **argv, char **env) {
 #endif
 	delete tfp;
 #endif
+
+    // print UART summary
+    printf("UART errors: %0d\nUART message---->\n%s\n<----\n", uart_rx_errs, uart_rx_str.c_str());
 
 	if (!Verilated::gotFinish()) {
 		printf("Simulation time out! Forced stop ...\n");
