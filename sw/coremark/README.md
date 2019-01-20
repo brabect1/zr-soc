@@ -8,6 +8,8 @@ CoreMark's primary goals are simplicity and providing a method for testing only 
 ```
 # Build a barebone version
 > make link PORT_DIR=barebone-arty-a7 CC=$RISCV_GCC LD=$RISCV_GCC
+
+> $RISCV_OBJDUMP -d coremark.bin > coremark.dump && $RISCV_OBJCOPY -O verilog coremark.bin coremark.verilog && sed -i 's/@800/@000/g' coremark.verilog && sed -i 's/@200/@000/g' coremark.verilog && sed -i 's/@00002FB8/@00002000/g' coremark.verilog
 ```
 
 # Building and Running (General)

@@ -120,7 +120,10 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 //	#error "Call board initialization routines in portable init (if needed), in particular initialize UART!\n"
     GPIO_REG(GPIO_IOF_SEL) &= ~IOF0_UART0_MASK;
     GPIO_REG(GPIO_IOF_EN) |= IOF0_UART0_MASK;
-    UART0_REG(UART_REG_DIV) = CLOCKS_PER_SEC / BAUD_RATE + 1;
+//TODO---->>>>
+//    UART0_REG(UART_REG_DIV) = CLOCKS_PER_SEC / BAUD_RATE + 1;
+    UART0_REG(UART_REG_DIV) = 1;
+//<<<<----
     UART0_REG(UART_REG_TXCTRL) |= UART_TXEN;
 
     if (sizeof(ee_ptr_int) != sizeof(ee_u8 *)) {

@@ -140,7 +140,7 @@ typedef ee_u32 CORE_TICKS;
 	to fit a particular architecture. 
 */
 #ifndef MULTITHREAD
-#define MULTITHREAD 0
+#define MULTITHREAD 1
 #define USE_PTHREAD 0
 #define USE_FORK 0
 #define USE_SOCKET 0
