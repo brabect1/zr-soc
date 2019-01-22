@@ -97,8 +97,8 @@ always_comb begin
     case (rx_fsm_q)
         RX_IDLE: begin
             if (rxd == 1'b0) begin
-                baud_rst = 1'b0;
-                rx_fsm_n = RX_START;
+                baud_rst = baud_half ? 1'b1 : 1'b0;
+                rx_fsm_n = baud_half ? RX_DATA : RX_START;
             end
         end
 
@@ -118,8 +118,12 @@ always_comb begin
 
         RX_DATA: begin
             baud_rst = 1'b0;
-            if (baud_full) begin
-                rx_fsm_n = (bit_cnt >= ctrl_bits) ? RX_STOP : RX_DATA;
+            // Note: The baud timing is pahse shifted by half of the baud rate and
+            // so we use `baud_half` as an indication of the end of the baud interval.
+            if (baud_half) begin
+                // Note: The `bit_cnt` resets automatically when transfering
+                // from RX_DATA to RX_STOP.
+                rx_fsm_n = (bit_cnt > ctrl_bits) ? RX_STOP : RX_DATA;
             end
         end
 
@@ -157,25 +161,33 @@ end
 
 always_ff @(posedge clk) begin: p_bit_cnt
     if (baud_rst) begin
-        bit_cnt = 1;
+        bit_cnt <= 1;
     end
     else if (baud_full) begin
         if (rx_fsm_n == RX_STOP)
-            bit_cnt = 1;
+            bit_cnt <= 1;
         else
-            bit_cnt = bit_cnt + 1;
+            bit_cnt <= bit_cnt + 1;
     end
 end: p_bit_cnt
 
-
-always_ff @(posedge clk) begin: p_rx_data
+int rx_data_int;
+always_ff @(posedge clk) begin: p_rx_data_int
     if (baud_rst) begin
-        rx_data = '0;
+        rx_data_int <= '0;
     end
     else if (baud_full && rx_fsm_q == RX_DATA) begin
-        rx_data[bit_cnt-1] = rxd;
+        rx_data_int[bit_cnt-1] <= rxd; // LSB first
+//        rx_data_int[ctrl_bits - bit_cnt] <= rxd; // MSB first
     end
-end: p_rx_data
+end: p_rx_data_int
 
+
+always_ff @(posedge clk or negedge rst_n) begin: p_rx_data
+    if (!rst_n)
+        rx_data <= 0;
+    else if (rx_rdy_comb)
+        rx_data <= rx_err_comb ? 0 : rx_data_int;
+end: p_rx_data
 
 endmodule: uart_model

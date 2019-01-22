@@ -305,7 +305,7 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 
-uart_model u_uart (
+uart_model u_uart_dev (
     .clk(clk),
     .rst_n(rst_n),
 
