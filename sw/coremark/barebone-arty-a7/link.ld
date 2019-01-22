@@ -5,6 +5,7 @@ SECTIONS
 {
   . = 0x80000000;
   .text.init : { *(.text.init) }
+  .tohost ALIGN(0x1000) : { *(.tohost) }
   /* text: test code section */
   .text : { *(.text) }
   /* data: Initialized data segment */
