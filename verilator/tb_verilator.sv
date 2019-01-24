@@ -38,6 +38,19 @@ module tb_verilator(
 `define TCM_AWIDTH 16
 `endif
 
+// When positive and set to N, the `irq` line will assert after 2**N clock
+// cycles. Otherwise the `irq` will be constantly de-asserted.
+`ifndef GEN_IRQ_2POW_CYCS
+`define GEN_IRQ_2POW_CYCS 13
+`endif
+
+// Forces the simulation to stop after 2**N clock cycles. This mechanism is
+// complementary to the similar one used in the C++ Verilator testbench
+// wrapper and it is up to users' preference which method they will use.
+`ifndef RUN_2POW_CYCS
+`define RUN_2POW_CYCS 20
+`endif
+
 //`define TCM_INIT_FILE "/tmp/github/zr/bram_init.txt"
 `define CPU_TOP u_soc.u_cpu.u_core
 `define EXU `CPU_TOP.u_e203_cpu.u_e203_core.u_e203_exu
@@ -155,7 +168,7 @@ end
 
 // watchdog
 always @(posedge clk) begin
-    if (cycle_count[20] == 1'b1) begin
+    if (cycle_count[`RUN_2POW_CYCS] == 1'b1) begin
         $error("Time Out !!!");
         $finish;
     end
@@ -293,12 +306,12 @@ always @(posedge clk or negedge rst_n) begin
         irq_i <= 1'b0;
         irq_serviced <= 1'b0;
     end
-    else if (!irq_serviced) begin
+    else if (`GEN_IRQ_2POW_CYCS > 0 && !irq_serviced) begin
         if (irq_i & irq_ack_o) begin
             irq_serviced <= 1'b1;
             irq_i <= 1'b0;
         end
-        else if (cycle_count[13]) begin
+        else if (cycle_count[`GEN_IRQ_2POW_CYCS]) begin
             irq_i <= 1'b1;
         end
     end

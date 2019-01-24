@@ -21,6 +21,14 @@ limitations under the License.
 #include <verilated_vcd_c.h>
 #endif
 
+// This value controls how many `clk` cycles will the C++ wrapper generate
+// before giving up the simulation. It is defined as a macro to let users
+// change the default for some longer simulations wihtout a need to edit
+// the wrapper.
+#ifndef RUN_2POW_CYCS
+#define RUN_2POW_CYCS 17
+#endif
+
 vluint64_t simtime = 0;       // Current simulation time
 				// This is a 64-bit integer to reduce wrap over issues and
 				// allow modulus.  You can also use a double, if you wish.
@@ -68,7 +76,7 @@ int main(int argc, char **argv, char **env) {
 #endif
 	simtime++;
 
-	while (!Verilated::gotFinish() && cnt < (1 << 17)) {
+	while (!Verilated::gotFinish() && cnt < (1 << RUN_2POW_CYCS)) {
         // check UART for new data
         if (top->uart_rx_rdy) {
             if (top->uart_rx_err) {
