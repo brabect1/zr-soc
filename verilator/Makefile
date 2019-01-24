@@ -76,10 +76,10 @@ all build: $(objdir)/$(obj)
 .PHONY: verilate
 verilate: $(objdir)/Vtb_verilator.mk
 
-$(objdir)/Vtb_verilator.mk: $(vsrc) $(csrc)
-	verilator $(vflags) $(vflags_extra) -o $(notdir $(obj)) $(csrc) $(vsrc)
+$(objdir)/Vtb_verilator.mk: $(vsrc)
+	verilator $(vflags) $(vflags_extra) -o $(notdir $(obj)) $(csrc) $(vsrc) && touch $@
 
-$(objdir)/$(obj): $(objdir)/Vtb_verilator.mk
+$(objdir)/$(obj): $(objdir)/Vtb_verilator.mk $(csrc)
 	make -C $(objdir) -f Vtb_verilator.mk
 
 .PHONY: clean
