@@ -53,6 +53,13 @@ module zr_coreplex #(
     input  logic[31:0] pd_icb_rsp_rdata,
     input  logic       pd_icb_rsp_err,
 
+    input  logic         tck,    // JTAG test clock pad
+    input  logic         tms,    // JTAG test mode select pad
+    input  logic         trstn,  // JTAG test reset pad
+    input  logic         tdi,    // JTAG test data input pad
+    output logic         tdo_o,  // JTAG test data output pad
+    output logic         tdo_t,  // Data out output enable
+
     input  logic clk,
     input  logic rst_n
 );

@@ -85,6 +85,12 @@ zr_coreplex #(
     .TCM_AWIDTH(TCM_AWIDTH),
     .BOOT_ADDR(BOOT_ADDR)
 ) u_cpu ( 
+    .tck(1'b0),    // JTAG test clock pad
+    .tms(1'b0),    // JTAG test mode select pad
+    .trstn(1'b0),  // JTAG test reset pad
+    .tdi(1'b0),    // JTAG test data input pad
+    .tdo_o(    ),  // JTAG test data output pad
+    .tdo_t(    ),  // Data out output enable
     .pi_icb_rsp_err(1'b0),
     .*
 );

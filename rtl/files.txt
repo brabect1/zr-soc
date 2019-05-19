@@ -75,5 +75,17 @@ zero-riscy/rtl/ibex_prefetch_buffer.sv
 zero-riscy/rtl/ibex_register_file_ff.sv
 zero-riscy/rtl/ibex_tracer.sv
 #zero-riscy/rtl/ibex_tracer_defines.sv
+#---->>>>
+#riscv-dbg/src/riscv_pkg.sv
+#riscv-dbg/src/ariane_axi_pkg.sv
+riscv-dbg/src/dm_pkg.sv
+riscv-dbg/src/dm_csrs.sv
+riscv-dbg/src/dm_mem.sv
+riscv-dbg/src/dm_sba.sv
+riscv-dbg/src/dm_top.sv
+riscv-dbg/src/dmi_cdc.sv
+riscv-dbg/src/dmi_jtag.sv
+riscv-dbg/src/dmi_jtag_tap.sv
+#<<<<----
 zr_coreplex.sv
 zr_soc.sv

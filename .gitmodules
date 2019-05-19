@@ -4,3 +4,6 @@
 [submodule "ip/zero-riscy"]
 	path = ip/zero-riscy
 	url = https://github.com/brabect1/zero-riscy
+[submodule "ip/riscv-dbg"]
+	path = ip/riscv-dbg
+	url = https://github.com/pulp-platform/riscv-dbg

@@ -15,6 +15,11 @@
 SHELL=bash
 
 vdir = ../rtl
+#       $(vdir)/riscv-dbg/src/dm_pkg.sv \
+#       $(vdir)/riscv-dbg/src/riscv_pkg.sv \
+#       $(vdir)/riscv-dbg/src/ariane_axi_pkg.sv \
+#       $(filter-out $(vdir)/riscv-dbg/src/%_pkg.sv,$(wildcard $(vdir)/riscv-dbg/src/*.*v*)) \
+#
 vsrc = tb_verilator.sv spi_model.sv uart_model.sv \
        $(vdir)/zero-riscy/rtl/ibex_defines.sv \
        $(filter-out $(vdir)/zero-riscy/rtl/ibex_register_file% $(vdir)/zero-riscy/rtl/ibex_defines.sv,$(wildcard $(vdir)/*.*v* $(vdir)/zero-riscy/rtl/*.*v*)) \
