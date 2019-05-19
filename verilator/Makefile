@@ -16,16 +16,16 @@ SHELL=bash
 
 vdir = ../rtl
 vsrc = tb_verilator.sv spi_model.sv uart_model.sv \
-       $(vdir)/zero-riscy/include/zeroriscy_defines.sv \
-       $(filter-out $(vdir)/zero-riscy/zeroriscy_register_file%,$(wildcard $(vdir)/*.*v* $(vdir)/zero-riscy/*.*v* $(vdir)/pulpino/*.*v*)) \
-       $(vdir)/zero-riscy/zeroriscy_register_file_ff.sv \
+       $(vdir)/zero-riscy/rtl/ibex_defines.sv \
+       $(filter-out $(vdir)/zero-riscy/rtl/ibex_register_file% $(vdir)/zero-riscy/rtl/ibex_defines.sv,$(wildcard $(vdir)/*.*v* $(vdir)/zero-riscy/rtl/*.*v*)) \
+       $(vdir)/zero-riscy/rtl/ibex_register_file_ff.sv \
        $(wildcard $(vdir)/riscv_jtag_dm/*.*v*) \
        $(wildcard $(vdir)/perips/*.*v*)
 csrc = sim.cpp
 cflags =
 objdir = obj
 obj = $(csrc:%.cpp=%)
-vflags = $(if $(cflags),-CFLAGS "$(cflags)") --cc --exe --Mdir $(objdir) +incdir+$(vdir)/zero-riscy/include \
+vflags = $(if $(cflags),-CFLAGS "$(cflags)") --cc --exe --Mdir $(objdir) \
 	 --top-module tb_verilator \
 	 -Wno-WIDTH -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE -Wno-LITENDIAN
 vflags_extra = --trace
@@ -38,7 +38,7 @@ isa_test_patts ?= \
 #                  rv32ua* \
 #                  rv32mi* \
 
-isa_test_dir ?= ../riscv-tools/riscv-tests/isa/generated
+isa_test_dir ?= ../isa-tests/generated
 isa_tests ?= $(basename $(notdir $(wildcard $(foreach p,$(isa_test_patts),$(isa_test_dir)/$(p).verilog))))
 
 

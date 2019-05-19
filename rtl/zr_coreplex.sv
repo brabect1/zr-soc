@@ -85,15 +85,16 @@ assign dbg_irq = dm_dbg_irq & dtm_dbg_ien;
 // ----------------------------------------------
 // CPU Core
 // ----------------------------------------------
-zeroriscy_core #(
-    .N_EXT_PERF_COUNTERS(0),
+ibex_core #(
+    .NumExtPerfCounters(1),
+    .DmHaltAddr( 32'h1A110800 ),
+    .DmExceptionAddr( 32'h1A110808 ),
     .RV32E(RV32E),
     .RV32M(RV32M)
 ) u_core (
     // Clock and Reset
     .clk_i(clk),
     .rst_ni(rst_n),
-    .clock_en_i(1'b1),    // enable clock, otherwise it is gated
     .test_en_i(1'b0),     // enable all clock gates for testing
 
     // Core ID, Cluster ID and boot address are considered more or less static
@@ -107,20 +108,9 @@ zeroriscy_core #(
     .irq_ack_o( irq_ack_o ),             // irq ack
     .irq_id_o( irq_id_o ),
 
-    // Debug Interface (legacy) - tied off
-    .debug_req_i(1'b0),
-    .debug_gnt_o(),
-    .debug_rvalid_o(),
-    .debug_addr_i('0),
-    .debug_we_i(1'b0),
-    .debug_wdata_i('0),
-    .debug_rdata_o(),
-    .debug_halted_o(),
-    .debug_halt_i(1'b0),
-    .debug_resume_i(1'b0),
-
-//TODO    // Debug interface (RV)
-//TODO    .dbg_irq( dbg_irq[0] ),
+    // Debug interface (RV v0.13)
+//TODO    .debug_req_i( dbg_irq[0] ),
+    .debug_req_i( 1'b0 ),
 
     // CPU Control Signals
     .fetch_enable_i(1'b1),
