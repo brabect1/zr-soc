@@ -210,54 +210,50 @@ Disassembly of section .text.init:
 80000208:	30005073          	csrwi	mstatus,0
 8000020c:	08000513          	li	a0,128
 80000210:	30052073          	csrs	mstatus,a0
-80000214:	4501                	li	a0,0
-80000216:	bfc51073          	csrw	0xbfc,a0
-8000021a:	00000297          	auipc	t0,0x0
-8000021e:	01428293          	addi	t0,t0,20 # 8000022e <test_2>
-80000222:	34129073          	csrw	mepc,t0
-80000226:	f1402573          	csrr	a0,mhartid
-8000022a:	30200073          	mret
+80000214:	00000297          	auipc	t0,0x0
+80000218:	01428293          	addi	t0,t0,20 # 80000228 <test_2>
+8000021c:	34129073          	csrw	mepc,t0
+80000220:	f1402573          	csrr	a0,mhartid
+80000224:	30200073          	mret
 
-8000022e <test_2>:
-8000022e:	4189                	li	gp,2
-80000230:	4081                	li	ra,0
-80000232:	00a0026f          	jal	tp,8000023c <target_2>
+80000228 <test_2>:
+80000228:	4189                	li	gp,2
+8000022a:	4081                	li	ra,0
+8000022c:	00a0026f          	jal	tp,80000236 <target_2>
 
-80000236 <linkaddr_2>:
-80000236:	0001                	nop
-80000238:	0001                	nop
-8000023a:	a035                	j	80000266 <fail>
+80000230 <linkaddr_2>:
+80000230:	0001                	nop
+80000232:	0001                	nop
+80000234:	a035                	j	80000260 <fail>
 
-8000023c <target_2>:
-8000023c:	00000117          	auipc	sp,0x0
-80000240:	ffa10113          	addi	sp,sp,-6 # 80000236 <linkaddr_2>
-80000244:	02411163          	bne	sp,tp,80000266 <fail>
+80000236 <target_2>:
+80000236:	00000117          	auipc	sp,0x0
+8000023a:	ffa10113          	addi	sp,sp,-6 # 80000230 <linkaddr_2>
+8000023e:	02411163          	bne	sp,tp,80000260 <fail>
 
-80000248 <test_3>:
-80000248:	4085                	li	ra,1
-8000024a:	00c0006f          	j	80000256 <test_3+0xe>
+80000242 <test_3>:
+80000242:	4085                	li	ra,1
+80000244:	00c0006f          	j	80000250 <test_3+0xe>
+80000248:	0085                	addi	ra,ra,1
+8000024a:	0085                	addi	ra,ra,1
+8000024c:	0085                	addi	ra,ra,1
 8000024e:	0085                	addi	ra,ra,1
 80000250:	0085                	addi	ra,ra,1
 80000252:	0085                	addi	ra,ra,1
-80000254:	0085                	addi	ra,ra,1
-80000256:	0085                	addi	ra,ra,1
-80000258:	0085                	addi	ra,ra,1
-8000025a:	4e8d                	li	t4,3
-8000025c:	418d                	li	gp,3
-8000025e:	01d09463          	bne	ra,t4,80000266 <fail>
-80000262:	00301963          	bne	zero,gp,80000274 <pass>
+80000254:	4e8d                	li	t4,3
+80000256:	418d                	li	gp,3
+80000258:	01d09463          	bne	ra,t4,80000260 <fail>
+8000025c:	00301963          	bne	zero,gp,8000026e <pass>
 
-80000266 <fail>:
-80000266:	00018063          	beqz	gp,80000266 <fail>
-8000026a:	0186                	slli	gp,gp,0x1
-8000026c:	0011e193          	ori	gp,gp,1
+80000260 <fail>:
+80000260:	00018063          	beqz	gp,80000260 <fail>
+80000264:	0186                	slli	gp,gp,0x1
+80000266:	0011e193          	ori	gp,gp,1
+8000026a:	00000073          	ecall
+
+8000026e <pass>:
+8000026e:	4185                	li	gp,1
 80000270:	00000073          	ecall
-
-80000274 <pass>:
-80000274:	4185                	li	gp,1
-80000276:	00000073          	ecall
-8000027a:	0000                	unimp
-8000027c:	0000                	unimp
 	...
 
 Disassembly of section .tohost:

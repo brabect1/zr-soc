@@ -210,46 +210,43 @@ Disassembly of section .text.init:
 80000208:	30005073          	csrwi	mstatus,0
 8000020c:	08000513          	li	a0,128
 80000210:	30052073          	csrs	mstatus,a0
-80000214:	4501                	li	a0,0
-80000216:	bfc51073          	csrw	0xbfc,a0
-8000021a:	00000297          	auipc	t0,0x0
-8000021e:	01428293          	addi	t0,t0,20 # 8000022e <test_2>
-80000222:	34129073          	csrw	mepc,t0
-80000226:	f1402573          	csrr	a0,mhartid
-8000022a:	30200073          	mret
+80000214:	00000297          	auipc	t0,0x0
+80000218:	01428293          	addi	t0,t0,20 # 80000228 <test_2>
+8000021c:	34129073          	csrw	mepc,t0
+80000220:	f1402573          	csrr	a0,mhartid
+80000224:	30200073          	mret
 
-8000022e <test_2>:
-8000022e:	0001                	nop
-80000230:	00002517          	auipc	a0,0x2
-80000234:	71c50513          	addi	a0,a0,1820 # 8000294c <_end+0x93c>
-80000238:	004005ef          	jal	a1,8000023c <test_2+0xe>
-8000023c:	8d0d                	sub	a0,a0,a1
-8000023e:	00002eb7          	lui	t4,0x2
-80000242:	710e8e93          	addi	t4,t4,1808 # 2710 <_start-0x7fffd970>
-80000246:	4189                	li	gp,2
-80000248:	03d51463          	bne	a0,t4,80000270 <fail>
+80000228 <test_2>:
+80000228:	00002517          	auipc	a0,0x2
+8000022c:	71c50513          	addi	a0,a0,1820 # 80002944 <_end+0x934>
+80000230:	004005ef          	jal	a1,80000234 <test_2+0xc>
+80000234:	8d0d                	sub	a0,a0,a1
+80000236:	00002eb7          	lui	t4,0x2
+8000023a:	710e8e93          	addi	t4,t4,1808 # 2710 <_start-0x7fffd970>
+8000023e:	4189                	li	gp,2
+80000240:	03d51463          	bne	a0,t4,80000268 <fail>
 
-8000024c <test_3>:
-8000024c:	00000013          	nop
-80000250:	ffffe517          	auipc	a0,0xffffe
-80000254:	8fc50513          	addi	a0,a0,-1796 # 7fffdb4c <_start-0x2534>
-80000258:	004005ef          	jal	a1,8000025c <test_3+0x10>
-8000025c:	8d0d                	sub	a0,a0,a1
-8000025e:	ffffeeb7          	lui	t4,0xffffe
-80000262:	8f0e8e93          	addi	t4,t4,-1808 # ffffd8f0 <_end+0x7fffb8e0>
-80000266:	418d                	li	gp,3
-80000268:	01d51463          	bne	a0,t4,80000270 <fail>
-8000026c:	00301963          	bne	zero,gp,8000027e <pass>
+80000244 <test_3>:
+80000244:	00000013          	nop
+80000248:	ffffe517          	auipc	a0,0xffffe
+8000024c:	8fc50513          	addi	a0,a0,-1796 # 7fffdb44 <_start-0x253c>
+80000250:	004005ef          	jal	a1,80000254 <test_3+0x10>
+80000254:	8d0d                	sub	a0,a0,a1
+80000256:	ffffeeb7          	lui	t4,0xffffe
+8000025a:	8f0e8e93          	addi	t4,t4,-1808 # ffffd8f0 <_end+0x7fffb8e0>
+8000025e:	418d                	li	gp,3
+80000260:	01d51463          	bne	a0,t4,80000268 <fail>
+80000264:	00301963          	bne	zero,gp,80000276 <pass>
 
-80000270 <fail>:
-80000270:	00018063          	beqz	gp,80000270 <fail>
-80000274:	0186                	slli	gp,gp,0x1
-80000276:	0011e193          	ori	gp,gp,1
-8000027a:	00000073          	ecall
+80000268 <fail>:
+80000268:	00018063          	beqz	gp,80000268 <fail>
+8000026c:	0186                	slli	gp,gp,0x1
+8000026e:	0011e193          	ori	gp,gp,1
+80000272:	00000073          	ecall
 
-8000027e <pass>:
-8000027e:	4185                	li	gp,1
-80000280:	00000073          	ecall
+80000276 <pass>:
+80000276:	4185                	li	gp,1
+80000278:	00000073          	ecall
 	...
 
 Disassembly of section .tohost:

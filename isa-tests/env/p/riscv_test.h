@@ -283,8 +283,8 @@ post_mtvec:  la t0, stvec_handler;                                           \
         /*Bob added code to enable the interrupt enables: begin*/              \
         li a0, MSTATUS_MPIE;                                                   \
         csrs mstatus, a0;                                                     \
-        li a0, 0x0;/*We need to enable the ecc exception */                                                   \
-        csrw 0xbfc, a0;                                                     \
+/*        li a0, 0x0;/*We need to enable the ecc exception */                                                   \
+/*        csrw 0xbfc, a0;*/                                                     \
         /*Bob added code to enable the interrupt enables: end*/              \
         /*Bob added code to enable the PLL: begin{*/                    \
 /*        li t0, 2560; /*Wait loops before switch to PLL*/                  \
