@@ -32,29 +32,7 @@ perips/sirv_uart.v
 perips/sirv_uart_top.v
 perips/sirv_uarttx.v
 perips/uart_rx.v
-pulpino/cluster_clock_gating.sv
-# +incdir+zero-riscy/include
-# zero-riscy/include/zeroriscy_defines.sv
-# zero-riscy/zeroriscy_alu.sv
-# zero-riscy/zeroriscy_compressed_decoder.sv
-# zero-riscy/zeroriscy_controller.sv
-# zero-riscy/zeroriscy_core.sv
-# zero-riscy/zeroriscy_cs_registers.sv
-# zero-riscy/zeroriscy_debug_unit.sv
-# zero-riscy/zeroriscy_decoder.sv
-# zero-riscy/zeroriscy_ex_block.sv
-# zero-riscy/zeroriscy_fetch_fifo.sv
-# zero-riscy/zeroriscy_id_stage.sv
-# zero-riscy/zeroriscy_if_stage.sv
-# zero-riscy/zeroriscy_int_controller.sv
-# zero-riscy/zeroriscy_load_store_unit.sv
-# zero-riscy/zeroriscy_multdiv_fast.sv
-# zero-riscy/zeroriscy_multdiv_slow.sv
-# zero-riscy/zeroriscy_pkg.sv
-# zero-riscy/zeroriscy_prefetch_buffer.sv
-# #zero-riscy/zeroriscy_register_file.sv
-# zero-riscy/zeroriscy_register_file_ff.sv
-# zero-riscy/zeroriscy_tracer.sv
+prim_clock_gating.sv
 ibex/ibex_alu.sv
 ibex/ibex_compressed_decoder.sv
 ibex/ibex_controller.sv
