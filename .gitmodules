@@ -7,3 +7,6 @@
 [submodule "ip/riscv-dbg"]
 	path = ip/riscv-dbg
 	url = https://github.com/pulp-platform/riscv-dbg
+[submodule "ip/ibex"]
+	path = ip/ibex
+	url = https://github.com/lowRISC/ibex
