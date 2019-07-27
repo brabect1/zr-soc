@@ -38,7 +38,7 @@ RISCV_GCC ?= $(RISCV_PREFIX)gcc
 RISCV_GCC_OPTS ?= -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
 RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump
 RISCV_OBJDUMP_OPTS ?= --disassemble-all
-RISCV_OBJCOPY ?= $(RISCV_PREFIX)objcopy -O verilog 
+RISCV_OBJCOPY ?= $(RISCV_PREFIX)objcopy 
 RISCV_OBJCOPY_OPTS ?= -O verilog 
 RISCV_SIM ?= ${PWD}/../../prebuilt_tools/prefix/bin/spike
 
