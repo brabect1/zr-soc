@@ -21,9 +21,9 @@ vdir = ../rtl
 #       $(filter-out $(vdir)/riscv-dbg/src/%_pkg.sv,$(wildcard $(vdir)/riscv-dbg/src/*.*v*)) \
 #
 vsrc = tb_verilator.sv spi_model.sv uart_model.sv \
-       $(vdir)/zero-riscy/rtl/ibex_defines.sv \
-       $(filter-out $(vdir)/zero-riscy/rtl/ibex_register_file% $(vdir)/zero-riscy/rtl/ibex_defines.sv,$(wildcard $(vdir)/*.*v* $(vdir)/zero-riscy/rtl/*.*v*)) \
-       $(vdir)/zero-riscy/rtl/ibex_register_file_ff.sv \
+       $(vdir)/ibex/ibex_pkg.sv \
+       $(filter-out $(foreach f,ibex_register_file% ibex_pkg.sv ibex_core_tracing.sv ibex_tracer%,$(vdir)/ibex/$(f)),$(wildcard $(vdir)/*.*v* $(vdir)/ibex/*.*v*)) \
+       $(vdir)/ibex/ibex_register_file_ff.sv \
        $(wildcard $(vdir)/riscv_jtag_dm/*.*v*) \
        $(wildcard $(vdir)/perips/*.*v*)
 csrc = sim.cpp
@@ -58,6 +58,7 @@ help:
 	@echo -e "  test-<name> runs a single test"
 	@echo -e "  clean       delete all outputs"
 	@echo -e "\nVariables:"
+	@echo -e "  isa_test_dir     path to a folder with *.verilog files"
 	@echo -e "  isa_test_patts   space separated list of patterns of ISA tests"
 	@echo -e "                   (actual: '$(isa_test_patts)')"
 	@echo -e "  isa_tests        space separated list of tests to run for 'regression',"
@@ -68,6 +69,7 @@ help:
 	@echo -e "  make build test-rv32ui-p-xori"
 	@echo -e "  make regression isa_tests=rv32ui-p-xori"
 	@echo -e "  make regression isa_patts='rv32ui*'"
+	@echo -e "  make test-rv32ui-p-add isa_test_dir=../isa-tests/rebuild"
 	@echo -e ""
 
 .PHONY: list-tests list

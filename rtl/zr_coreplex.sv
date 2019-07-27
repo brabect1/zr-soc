@@ -27,10 +27,12 @@ module zr_coreplex #(
     parameter int TCM_AWIDTH = 15, // number of address LSBs to use for TCM addressing
     parameter logic[31:0] BOOT_ADDR = TCM_ADDR_BASE
 ) (
-    input  logic        irq_i,                 // level sensitive IR lines
-    input  logic [4:0]  irq_id_i,
-    output logic        irq_ack_o,             // irq ack
-    output logic [4:0]  irq_id_o,
+    // Interrupt inputs
+    input  logic        irq_software_i,
+    input  logic        irq_timer_i,
+    input  logic        irq_external_i,
+    input  logic [14:0] irq_fast_i,
+    input  logic        irq_nm_i,       // non-maskeable interrupt
 
     // Instruction peripheral bus
     output logic       pi_icb_cmd_valid,
@@ -93,7 +95,8 @@ assign dbg_irq = dm_dbg_irq & dtm_dbg_ien;
 // CPU Core
 // ----------------------------------------------
 ibex_core #(
-    .NumExtPerfCounters(1),
+    .MHPMCounterNum(0),
+    .MHPMCounterWidth(40),
     .DmHaltAddr( 32'h1A110800 ),
     .DmExceptionAddr( 32'h1A110808 ),
     .RV32E(RV32E),
@@ -109,19 +112,12 @@ ibex_core #(
     .cluster_id_i('0),
     .boot_addr_i(BOOT_ADDR),
 
-    // Interrupt inputs
-    .irq_i( irq_i ),                 // level sensitive IR lines
-    .irq_id_i( irq_id_i ),
-    .irq_ack_o( irq_ack_o ),             // irq ack
-    .irq_id_o( irq_id_o ),
-
     // Debug interface (RV v0.13)
 //TODO    .debug_req_i( dbg_irq[0] ),
     .debug_req_i( 1'b0 ),
 
     // CPU Control Signals
     .fetch_enable_i(1'b1),
-    .ext_perf_counters_i('0),
 
     // other ports
     .*

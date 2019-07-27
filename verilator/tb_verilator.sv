@@ -266,10 +266,12 @@ zr_soc #(
     .TCM_AWIDTH(`TCM_AWIDTH),
     .BOOT_ADDR(32'h8000_0000)
 ) u_soc (
-    .irq_i(irq_i),
-    .irq_id_i('0),
-    .irq_ack_o(irq_ack_o),
-    .irq_id_o(),
+//---->>>> tbrabec (27-Jul-2019): Temporarily removed IRQ interface from zr_soc.
+//    .irq_i(irq_i),
+//    .irq_id_i('0),
+//    .irq_ack_o(irq_ack_o),
+//    .irq_id_o(),
+//<<<<----
     .io_qspi_sck_o(sck),
     .io_qspi_sck_oe( ),
     .io_qspi_sck_pue( ),

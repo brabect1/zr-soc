@@ -27,11 +27,6 @@ module zr_soc #(
     parameter int TCM_AWIDTH = 15, // number of address LSBs to use for TCM addressing
     parameter logic[31:0] BOOT_ADDR = TCM_ADDR_BASE
 ) (
-    input  logic        irq_i,                 // level sensitive IR lines
-    input  logic [4:0]  irq_id_i,
-    output logic        irq_ack_o,             // irq ack
-    output logic [4:0]  irq_id_o,
-
     input  logic[31:0] io_gpio_i,
     output logic[31:0] io_gpio_o,
     output logic[31:0] io_gpio_oe,
@@ -84,7 +79,15 @@ zr_coreplex #(
 //    .TCM_ADDR_MASK(TCM_ADDR_MASK),
     .TCM_AWIDTH(TCM_AWIDTH),
     .BOOT_ADDR(BOOT_ADDR)
-) u_cpu ( 
+) u_cpu (
+    // interrupts - tie off for now 
+    .irq_software_i(1'b0),
+    .irq_timer_i(1'b0),
+    .irq_external_i(1'b0),
+    .irq_fast_i('0),
+    .irq_nm_i(1'b0),       // non-maskeable interrupt
+
+    // jtag debug interface - tie off for now
     .tck(1'b0),    // JTAG test clock pad
     .tms(1'b0),    // JTAG test mode select pad
     .trstn(1'b0),  // JTAG test reset pad

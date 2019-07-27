@@ -55,26 +55,26 @@ pulpino/cluster_clock_gating.sv
 # #zero-riscy/zeroriscy_register_file.sv
 # zero-riscy/zeroriscy_register_file_ff.sv
 # zero-riscy/zeroriscy_tracer.sv
-zero-riscy/rtl/ibex_alu.sv
-zero-riscy/rtl/ibex_compressed_decoder.sv
-zero-riscy/rtl/ibex_controller.sv
-zero-riscy/rtl/ibex_core.sv
-zero-riscy/rtl/ibex_cs_registers.sv
-zero-riscy/rtl/ibex_decoder.sv
-zero-riscy/rtl/ibex_defines.sv
-zero-riscy/rtl/ibex_ex_block.sv
-zero-riscy/rtl/ibex_fetch_fifo.sv
-zero-riscy/rtl/ibex_id_stage.sv
-zero-riscy/rtl/ibex_if_stage.sv
-zero-riscy/rtl/ibex_int_controller.sv
-zero-riscy/rtl/ibex_load_store_unit.sv
-zero-riscy/rtl/ibex_multdiv_fast.sv
-zero-riscy/rtl/ibex_multdiv_slow.sv
-zero-riscy/rtl/ibex_prefetch_buffer.sv
-#zero-riscy/rtl/ibex_register_file.sv
-zero-riscy/rtl/ibex_register_file_ff.sv
-zero-riscy/rtl/ibex_tracer.sv
-#zero-riscy/rtl/ibex_tracer_defines.sv
+ibex/ibex_alu.sv
+ibex/ibex_compressed_decoder.sv
+ibex/ibex_controller.sv
+ibex/ibex_core.sv
+#ibex/ibex_core_tracing.sv
+ibex/ibex_cs_registers.sv
+ibex/ibex_decoder.sv
+ibex/ibex_pkg.sv
+ibex/ibex_ex_block.sv
+ibex/ibex_fetch_fifo.sv
+ibex/ibex_id_stage.sv
+ibex/ibex_if_stage.sv
+ibex/ibex_load_store_unit.sv
+ibex/ibex_multdiv_fast.sv
+ibex/ibex_multdiv_slow.sv
+ibex/ibex_prefetch_buffer.sv
+#ibex/ibex_register_file_latch.sv
+ibex/ibex_register_file_ff.sv
+#ibex/ibex_tracer.sv
+#ibex/ibex_tracer_pkg.sv
 #---->>>>
 #riscv-dbg/src/riscv_pkg.sv
 #riscv-dbg/src/ariane_axi_pkg.sv
