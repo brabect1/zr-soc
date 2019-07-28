@@ -22,8 +22,12 @@ vdir = ../rtl
 #
 vsrc = tb_verilator.sv spi_model.sv uart_model.sv \
        $(vdir)/ibex/ibex_pkg.sv \
+       $(vdir)/riscv-dbg/src/dm_pkg.sv \
        $(filter-out $(foreach f,ibex_register_file% ibex_pkg.sv ibex_core_tracing.sv ibex_tracer%,$(vdir)/ibex/$(f)),$(wildcard $(vdir)/*.*v* $(vdir)/ibex/*.*v*)) \
        $(vdir)/ibex/ibex_register_file_ff.sv \
+       $(wildcard $(vdir)/pulp/*.*v*) \
+       $(vdir)/riscv-dbg/debug_rom/debug_rom.sv \
+       $(filter-out $(foreach f,dm_pkg.sv,$(vdir)/riscv-dbg/src/$(f)),$(wildcard $(vdir)/riscv-dbg/src/*.*v*)) \
        $(wildcard $(vdir)/riscv_jtag_dm/*.*v*) \
        $(wildcard $(vdir)/perips/*.*v*)
 csrc = sim.cpp
