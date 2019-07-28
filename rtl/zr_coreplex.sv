@@ -97,8 +97,8 @@ assign dbg_irq = dm_dbg_irq & dtm_dbg_ien;
 ibex_core #(
     .MHPMCounterNum(0),
     .MHPMCounterWidth(40),
-    .DmHaltAddr( 32'h1A110800 ),
-    .DmExceptionAddr( 32'h1A110808 ),
+    .DmHaltAddr( dm::HaltAddress[31:0] ), // PULP uses 32'h1A110800
+    .DmExceptionAddr( dm::ExceptionAddress[31:0]  ), // PULP uses 32'h1A110808
     .RV32E(RV32E),
     .RV32M(RV32M)
 ) u_core (
@@ -262,67 +262,56 @@ icb2debug_bus #(
 );
 
 // ----------------------------------------------
-// RISC-V Debug Module
+// RISC-V Debug Module (v0.13)
 // ----------------------------------------------
 
 localparam logic[31:0] DM_ADDR_BASE = 32'h0000_0000;
 localparam logic[31:0] DM_ADDR_MASK = 32'h0000_3fff;
 
-// DM to Instruction memory interface
-logic        dm_instr_cs;
+// Interface signals from CPU inst/data buseses to DM Slave Interface
+logic        dm_slave_inst_req;
 logic        dm_instr_gnt_i;
 logic        dm_instr_rvalid_i;
 logic [31:0] dm_instr_rdata_i;
 
-// DM to Data memory interface
-logic        dm_data_cs;
+logic        dm_slave_data_req;
 logic        dm_data_gnt_i;
 logic        dm_data_rvalid_i;
 logic [31:0] dm_data_rdata_i;
 logic        dm_data_err_i;
 
-// DM Instruction/Data memory arbiter
+// DM Instruction/Data memory arbiter (DM has only a single interface
+// that needs to be arbitrated between instruction reads from Program
+// Buffer and normal data accesses).
 logic dm_instr_sel;
 
-// DM ICB interface
-logic       dm_cmd_valid;
-logic       dm_cmd_ready;
-logic[11:0] dm_cmd_addr;
-logic       dm_cmd_read;
-logic[31:0] dm_cmd_wdata;
-logic       dm_rsp_valid;
-logic       dm_rsp_ready;
-logic[31:0] dm_rsp_rdata;
+// DM Slave interface (to read from/write to DM from CPU)
+logic          dm_slave_req;
+logic          dm_slave_we;
+logic [31:0]   dm_slave_addr;
+logic [ 3:0]   dm_slave_be;
+logic [31:0]   dm_slave_wdata;
+logic [31:0]   dm_slave_rdata;
 
-assign dm_instr_cs = instr_req_o & ((instr_addr_o & ~DM_ADDR_MASK) == (DM_ADDR_BASE & ~DM_ADDR_MASK));
-assign dm_data_cs = data_req_o & ((data_addr_o & ~DM_ADDR_MASK) == (DM_ADDR_BASE & ~DM_ADDR_MASK));
+// DM System Bus interface (to read from/write to CPU data bus address space)
+logic          dm_master_req;
+logic [31:0]   dm_master_addr;
+logic          dm_master_we;
+logic [31:0]   dm_master_wdata;
+logic [ 3:0]   dm_master_be;
+logic          dm_master_gnt;
+logic          dm_master_r_valid;
+logic [31:0]   dm_master_r_rdata;
 
-always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        dm_instr_sel <= 1'b1;
-        dm_cmd_valid <= 1'b0;
-    end
-    else begin
-        if (dm_instr_cs & dm_data_cs)
-            dm_instr_sel <= ~dm_instr_sel;
-        else
-            dm_instr_sel <= dm_instr_cs;
 
-        dm_cmd_valid <= (dm_instr_cs | dm_data_cs) & ~(dm_cmd_valid & dm_cmd_ready);
-    end
-end
+// DM Slave Iterfacing (and Arbitrartion)
+// --------------------------------------
+assign dm_slave_inst_req = instr_req_o & ((instr_addr_o & ~DM_ADDR_MASK) == (DM_ADDR_BASE & ~DM_ADDR_MASK));
+assign dm_slave_data_req = data_req_o & ((data_addr_o & ~DM_ADDR_MASK) == (DM_ADDR_BASE & ~DM_ADDR_MASK));
 
-assign dm_rsp_ready = 1'b1;
-assign dm_cmd_wdata = data_wdata_o;
-assign dm_cmd_addr  = dm_instr_sel ? instr_addr_o[11:0] : data_addr_o[11:0];
-assign dm_cmd_read  = dm_instr_sel ? 1'b1 : ~data_we_o;
-//assign dm_instr_rdata_i = {32{dm_instr_sel & dm_instr_cs}} & dm_rsp_rdata;
-//assign dm_data_rdata_i = {32{~dm_instr_sel & dm_data_cs}}  & dm_rsp_rdata;
-assign dm_instr_gnt_i = dm_instr_sel & dm_cmd_valid & dm_cmd_ready;
-//assign dm_instr_rvalid_i = dm_instr_sel & dm_rsp_valid & dm_rsp_ready;
+assign dm_instr_gnt_i = dm_instr_sel & dm_slave_inst_req;
 assign dm_data_err_i = 1'b0;
-assign dm_data_gnt_i = ~dm_instr_sel & dm_cmd_valid & dm_cmd_ready;
-//assign dm_data_rvalid_i = ~dm_instr_sel & dm_rsp_valid & dm_rsp_ready;
+assign dm_data_gnt_i = ~dm_instr_sel & dm_slave_data_req;
 
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -332,33 +321,128 @@ always_ff @(posedge clk or negedge rst_n) begin
         dm_data_rdata_i <= '0;
     end
     else begin
-        dm_instr_rvalid_i <= dm_instr_sel & dm_rsp_valid & dm_rsp_ready;
-        dm_instr_rdata_i <= (dm_instr_sel & dm_rsp_valid & dm_rsp_ready) ? dm_rsp_rdata : '0;
-        dm_data_rvalid_i <= ~dm_instr_sel & dm_rsp_valid & dm_rsp_ready;
-        dm_data_rdata_i <= (~dm_instr_sel & dm_rsp_valid & dm_rsp_ready) ? dm_rsp_rdata : '0;
+        dm_instr_rvalid_i <= dm_instr_sel & dm_slave_inst_req;
+        dm_instr_rdata_i  <= (dm_instr_sel & dm_slave_inst_req) ? dm_slave_rdata : '0;
+        dm_data_rvalid_i <= ~dm_instr_sel & dm_slave_data_req;
+        dm_data_rdata_i <= (~dm_instr_sel & dm_slave_data_req) ? dm_slave_rdata : '0;
     end
 end
 
+always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        dm_instr_sel <= 1'b1;
+    end
+    else begin
+        if (dm_slave_inst_req & dm_slave_data_req)       dm_instr_sel <= ~dm_instr_sel;
+        else if (dm_slave_inst_req | dm_slave_data_req)  dm_instr_sel <= dm_slave_inst_req;
+    end
+end
 
-riscv_dm_0p11 #(
-    .ASYNC_FF_LEVELS(2),
-    .PC_SIZE(32),
-    .HART_NUM(2),
-    .HART_ID_W(1)
-) u_dm(
-    .i_icb_cmd_valid( dm_cmd_valid ),
-    .i_icb_cmd_ready( dm_cmd_ready ),
-    .i_icb_cmd_addr(  dm_cmd_addr ),
-    .i_icb_cmd_read(  dm_cmd_read ),
-    .i_icb_cmd_wdata( dm_cmd_wdata ),
-    .i_icb_rsp_valid( dm_rsp_valid ),
-    .i_icb_rsp_ready( dm_rsp_ready ),
-    .i_icb_rsp_rdata( dm_rsp_rdata ),
-    .o_dbg_irq( dm_dbg_irq ),
-    .o_ndreset(),
-    .o_fullreset(),
-    .test_mode(1'b0),
-    .*
+assign dm_slave_req =
+    (dm_slave_inst_req &  dm_instr_sel) |
+    (dm_slave_data_req & ~dm_instr_sel);
+assign dm_slave_addr = dm_instr_sel ? instr_addr_o : data_addr_o; 
+assign dm_slave_we = data_we_o & ~dm_instr_sel;
+assign dm_slave_be = data_be_o | {$size(dm_slave_be){dm_instr_sel}};
+assign dm_slave_wdata = data_wdata_o;
+
+// DM Master Interfacing
+// ---------------------
+
+// TODO: Not implemented at the moment.
+assign dm_master_gnt = 1'b0;
+assign dm_master_r_valid = 1'b0;
+assign dm_master_r_rdata = '0;
+
+
+// DM Instantiation
+// ----------------
+dm::hartinfo_t  ibex_hartinfo;
+logic dmi_req_valid;
+logic dmi_req_ready;
+dm::dmi_req_t dmi_req;
+logic dmi_resp_valid;
+logic dmi_resp_ready;
+dm::dmi_resp_t dmi_resp;
+
+assign ibex_hartinfo = '{
+    zero1:      8'd0,
+    nscratch:   2'd2, // ibex has two dscratch registers
+    zero0:      3'd0,
+    dataaccess: 1'b1, // data registers are memory mapped in DM
+    datasize:   dm::DataCount, // defined by DM
+    dataaddr:   dm::DataAddr   // defined by DM
+};
+
+
+dm_top #(
+    .NrHarts(1),
+    .BusWidth(32),
+    .SelectableHarts(1)
+
+) u_dm (
+    // Clock and Reset
+    .clk_i(clk),
+    .rst_ni(rst_n),
+    .testmode_i(1'b0),
+    .ndmreset_o(),  // non-debug module reset
+    .dmactive_o(),  // debug module is active
+    .debug_req_o( {dm_dbg_irq[0]} ), // async debug request
+    .unavailable_i('0), // communicate whether the hart is unavailable (e.g.: power down)
+    .hartinfo_i( {ibex_hartinfo} ),
+
+    .slave_req_i( dm_slave_req ),
+    .slave_we_i( dm_slave_we ),
+    .slave_addr_i( dm_slave_addr ),
+    .slave_be_i( dm_slave_be ),
+    .slave_wdata_i( dm_slave_wdata ),
+    .slave_rdata_o( dm_slave_rdata ),
+
+    .master_req_o( dm_master_req ),
+    .master_add_o( dm_master_addr ),
+    .master_we_o( dm_master_we ),
+    .master_wdata_o( dm_master_wdata ),
+    .master_be_o( dm_master_be ),
+    .master_gnt_i( dm_master_gnt ),
+    .master_r_valid_i( dm_master_r_valid ),
+    .master_r_rdata_i( dm_master_r_rdata ),
+
+    // Connection to DTM - compatible to RocketChip Debug Module
+    .dmi_rst_ni( rst_n ),
+    .dmi_req_valid_i( dmi_req_valid ),
+    .dmi_req_ready_o( dmi_req_ready ),
+    .dmi_req_i( dmi_req ),
+    .dmi_resp_valid_o( dmi_resp_valid ),
+    .dmi_resp_ready_i( dmi_resp_ready ),
+    .dmi_resp_o ( dmi_resp )
+);
+
+
+// JTAG DMI Instantiation
+// ----------------------
+localparam int JTAG_VERSION  = 4'h1;
+localparam int JTAG_PART_NUM = 16'h0E31; // E31
+localparam int JTAG_MANUF_ID = 11'h489;  // As Assigned by JEDEC
+
+dmi_jtag #(
+    .IdcodeValue( {JTAG_VERSION[3:0], JTAG_PART_NUM[15:0], JTAG_MANUF_ID[10:0], 1'h1} )
+) u_dmi_jtag (
+    .clk_i(clk),
+    .rst_ni(rst_n),
+    .testmode_i(1'b0),
+    .dmi_req_o            ( dmi_req ),
+    .dmi_req_valid_o      ( dmi_req_valid ),
+    .dmi_req_ready_i      ( dmi_req_ready ),
+    .dmi_resp_i           ( dmi_resp ),
+    .dmi_resp_ready_o     ( dmi_resp_ready ),
+    .dmi_resp_valid_i     ( dmi_resp_valid ),
+    .dmi_rst_no           (), // not connected
+    .tck_i                ( tck ),
+    .tms_i                ( tms ),
+    .trst_ni              ( trstn ),
+    .td_i                 ( tdi ),
+    .td_o                 ( tdo_o ),
+    .tdo_oe_o             ()
 );
 
 // ----------------------------------------------
