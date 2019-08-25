@@ -40,25 +40,23 @@ Change log:
 * --------------------
 *
 * The two registers (DWORD and Others) are used for controling the request part of the
-* DM Dbus interface. For use of the registers refer to the description of the DM Dbus
+* DMI interface. For use of the registers refer to the description of the DMI
 * interface.
 *
 * - DWORD[31:0]: Request data[31:0]
-* - Others[1:0]: Request data[33:32]
 * - Others[3:2]: Request code
 * - Others[8:4]: Request address
 *
 * DM Response Registers
 * ---------------------
 *
-* The two registers (DWORD and Others) latch responses to requests on the the DM Dbus
+* The two registers (DWORD and Others) latch responses to requests on the the DMI
 * interface.
 *
 * - DWORD[31:0]: Response data[31:0]
-* - Others[1:0]: Response data[33:32]
 * - Others[3:2]: Response code
 * - Others[8:4]: Request address (copied from DM Request Others at the completion
-*                of Dbus handshake)
+*                of DMI handshake)
 *
 * Control Register
 * ----------------
@@ -72,7 +70,7 @@ Change log:
 * Read-only register to provide miscellaneous status information. Its structure is as
 * follows:
 *
-* - [31]: Dbus Busy (asserted when there is a Dbus operation in progress)
+* - [31]: DMI Busy (asserted when there is a DMI operation in progress)
 * - [HART_NUM-1:0]: Debug IRQ (represents the value on the `dbg_irq` input)
 * - others: reserved (read as 0)
 *
@@ -103,20 +101,20 @@ Change log:
 * IRQ (through this DTM) and (3) taking whatever action to take the CPU into the
 * Debug Mode (e.g. executing `ebreak` or setting `halt` in `dcsr`).
 *
-* Dbus Interface
-* --------------
+* DMI Interface
+* -------------
 *
-* Dbus is an interface between DTM and DM modules. It represents a request-response
+* DMI is an interface between DTM and DM modules. It represents a request-response
 * handshake interface, where a request initiated by DTM is responded to by DM.
 *
-* The request part carries an address, 34-bit data and 2-bit request code. This
+* The request part carries an address, 32-bit data and 2-bit request code. This
 * infomation is mapped to the DTM Request registers, such that data[31:0] maps
 * to DM Request DWORD and the other information map to DM Request Others.
 *
-* The response part carries a 2-bit response code and 34-bit data. This information
-* map to the DM Response registers. Again, data[31:0] maps to DM Response DWORD and
+* The response part carries a 2-bit response code and 32-bit data. This information
+* maps to the DM Response registers. Again, data[31:0] maps to DM Response DWORD and
 * the other information to DM Response Others. Value of the DM Response registers
-* updates only on the completion of the Dbus request-response handshake.
+* updates only on the completion of the DMI request-response handshake.
 *
 * The handshake is started by writing into the DM Request Others register. Hence
 * a new value of DM Request DWORD shall be written ahead of the write to DM Request
@@ -126,8 +124,8 @@ Change log:
 *
 */
 module icb2debug_bus #(
-    parameter int DEBUG_DATA_BITS  = 34,
-    parameter int DEBUG_ADDR_BITS = 5, // Spec allows values are 5-7 (TODO: need to double check)
+    parameter int DEBUG_DATA_BITS  = 32,
+    parameter int DEBUG_ADDR_BITS = 7, // Spec allows values are 5-7 (TODO: need to double check)
     parameter int DEBUG_OP_BITS = 2, // OP and RESP are the same size.
     parameter int DBUS_REQ_BITS = DEBUG_OP_BITS + DEBUG_ADDR_BITS + DEBUG_DATA_BITS,
     parameter int DBUS_RESP_BITS = DEBUG_OP_BITS + DEBUG_DATA_BITS,
@@ -176,7 +174,7 @@ localparam logic [$size(icb_cmd_addr)-1:0] ADDR_STAT = 20;
 localparam logic [$size(icb_cmd_addr)-1:0] ADDR_DM_IEN = 24;
 localparam logic [$size(icb_cmd_addr)-1:0] ADDR_DM_TMP_IDIS = 28;
 
-localparam int DBUS_OTHERS_LEN = DBUS_REQ_BITS - 32;
+localparam int DBUS_OTHERS_LEN = DBUS_REQ_BITS - 32 +2; // the extra +2 is for unused LSBs (compatibility with RV DBG v0.11)
 
 // synchronous reset activated on write into CTRL
 logic dtm_rst;
@@ -300,7 +298,7 @@ always_ff @(posedge clk or negedge rst_n) begin: p_resp_regs
     end
     else if (dbus_op_done) begin
         reg_dbus_rsp_dword <= dtm_resp_bits[DEBUG_OP_BITS +:32];
-        reg_dbus_rsp_others <= {reg_dbus_req_others[DEBUG_DATA_BITS-32+DEBUG_OP_BITS +:DEBUG_ADDR_BITS], dbus_rsp_stat, dtm_resp_bits[DEBUG_OP_BITS+32 +:DEBUG_DATA_BITS-32]};
+        reg_dbus_rsp_others <= {reg_dbus_req_others[2+DEBUG_OP_BITS +:DEBUG_ADDR_BITS], dbus_rsp_stat, 2'b00};
     end
 end: p_resp_regs
 
@@ -345,15 +343,14 @@ always_comb begin: p_icb_rsp_mux
 end: p_icb_rsp_mux
 
 assign dtm_req_bits[DEBUG_DATA_BITS+DEBUG_OP_BITS-1:DEBUG_OP_BITS] = {
-    reg_dbus_req_others[DEBUG_DATA_BITS-32-1:0],
     reg_dbus_req_dword
 };
 assign dtm_req_bits[DEBUG_OP_BITS-1:0] = dbus_req_op;
-assign dtm_req_bits[DBUS_REQ_BITS-1:DEBUG_OP_BITS+DEBUG_DATA_BITS] = reg_dbus_req_others[DBUS_REQ_BITS-33:DEBUG_DATA_BITS-32+DEBUG_OP_BITS];
+assign dtm_req_bits[DBUS_REQ_BITS-1:DEBUG_OP_BITS+DEBUG_DATA_BITS] = reg_dbus_req_others[DBUS_OTHERS_LEN-1:2+DEBUG_OP_BITS];
 
 assign dtm_resp_ready = dtm_resp_valid;
 
-assign dbus_req_op_i = t_dbus_req_op'(reg_dbus_req_others[DEBUG_DATA_BITS-32+DEBUG_OP_BITS-1:DEBUG_DATA_BITS-32]);
+assign dbus_req_op_i = t_dbus_req_op'(reg_dbus_req_others[2+DEBUG_OP_BITS-1:2]);
 assign dbus_rsp_stat = t_dbus_rsp_stat'({dbus_rsp_stat_sticky, dtm_resp_bits[0]});
 
 assign dtm_rst = we_ctrl;

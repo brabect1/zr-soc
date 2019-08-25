@@ -189,15 +189,15 @@ dp_ram #(
 // ----------------------------------------------
 
 localparam int DBUS_REQ_BITS = 41;
-localparam int DBUS_RESP_BITS = 36;
+localparam int DBUS_RESP_BITS = 34;
 
 // Debug Bus interface
-logic                     dtm_req_valid;
-logic                     dtm_req_ready;
-logic[DBUS_REQ_BITS-1:0]  dtm_req_bits;
-logic                     dtm_resp_valid;
-logic                     dtm_resp_ready;
-logic[DBUS_RESP_BITS-1:0] dtm_resp_bits;
+logic                     sys_dtm_req_valid;
+logic                     sys_dtm_req_ready;
+logic[DBUS_REQ_BITS-1:0]  sys_dtm_req;
+logic                     sys_dtm_resp_valid;
+logic                     sys_dtm_resp_ready;
+logic[DBUS_RESP_BITS-1:0] sys_dtm_resp;
 
 
 localparam logic[31:0] DTM_ADDR_BASE = 32'h0000_4000;
@@ -258,6 +258,12 @@ icb2debug_bus #(
     .icb_rsp_rdata( dtm_rsp_rdata ),
     .dbg_irq( dm_dbg_irq ),
     .dbg_ien( dtm_dbg_ien ),
+    .dtm_req_valid(sys_dtm_req_valid),
+    .dtm_req_ready(sys_dtm_req_ready),
+    .dtm_req_bits (sys_dtm_req      ),
+    .dtm_resp_valid(sys_dtm_resp_valid),
+    .dtm_resp_ready(sys_dtm_resp_ready),
+    .dtm_resp_bits (sys_dtm_resp      ),
     .*
 );
 
@@ -418,11 +424,18 @@ dm_top #(
 );
 
 
-// JTAG DMI Instantiation
+// JTAG DTM Instantiation
 // ----------------------
 localparam int JTAG_VERSION  = 4'h1;
 localparam int JTAG_PART_NUM = 16'h0E31; // E31
 localparam int JTAG_MANUF_ID = 11'h489;  // As Assigned by JEDEC
+
+logic jtag_dmi_req_valid;
+logic jtag_dmi_req_ready;
+dm::dmi_req_t jtag_dmi_req;
+logic jtag_dmi_resp_valid;
+logic jtag_dmi_resp_ready;
+dm::dmi_resp_t jtag_dmi_resp;
 
 dmi_jtag #(
     .IdcodeValue( {JTAG_VERSION[3:0], JTAG_PART_NUM[15:0], JTAG_MANUF_ID[10:0], 1'h1} )
@@ -430,12 +443,12 @@ dmi_jtag #(
     .clk_i(clk),
     .rst_ni(rst_n),
     .testmode_i(1'b0),
-    .dmi_req_o            ( dmi_req ),
-    .dmi_req_valid_o      ( dmi_req_valid ),
-    .dmi_req_ready_i      ( dmi_req_ready ),
-    .dmi_resp_i           ( dmi_resp ),
-    .dmi_resp_ready_o     ( dmi_resp_ready ),
-    .dmi_resp_valid_i     ( dmi_resp_valid ),
+    .dmi_req_o            ( jtag_dmi_req ),
+    .dmi_req_valid_o      ( jtag_dmi_req_valid ),
+    .dmi_req_ready_i      ( jtag_dmi_req_ready ),
+    .dmi_resp_i           ( jtag_dmi_resp ),
+    .dmi_resp_ready_o     ( jtag_dmi_resp_ready ),
+    .dmi_resp_valid_i     ( jtag_dmi_resp_valid ),
     .dmi_rst_no           (), // not connected
     .tck_i                ( tck ),
     .tms_i                ( tms ),
@@ -443,6 +456,40 @@ dmi_jtag #(
     .td_i                 ( tdi ),
     .td_o                 ( tdo_o ),
     .tdo_oe_o             ()
+);
+
+// ----------------------------------------------
+// DTM Arbiter
+// ----------------------------------------------
+// (Arbitrates between the JTAG DTM and System Bus DTM.)
+
+dmi_arbiter u_dtm_arbiter(
+    // --- Port 0 DTM Interface ---
+    .dtm0_req_vld (jtag_dmi_req_valid ),
+    .dtm0_req_rdy (jtag_dmi_req_ready ),
+    .dtm0_req_bits(jtag_dmi_req       ),
+    .dtm0_rsp_vld (jtag_dmi_resp_valid),
+    .dtm0_rsp_rdy (jtag_dmi_resp_ready),
+    .dtm0_rsp_bits(jtag_dmi_resp      ),
+
+    // --- Port 1 DTM Interface ---
+    .dtm1_req_vld (sys_dtm_req_valid ),
+    .dtm1_req_rdy (sys_dtm_req_ready ),
+    .dtm1_req_bits(sys_dtm_req       ),
+    .dtm1_rsp_vld (sys_dtm_resp_valid),
+    .dtm1_rsp_rdy (sys_dtm_resp_ready),
+    .dtm1_rsp_bits(sys_dtm_resp      ),
+
+    // --- DM Interface ---
+    .dm_req_vld (dmi_req_valid),
+    .dm_req_rdy (dmi_req_ready),
+    .dm_req_bits(dmi_req      ),
+    .dm_rsp_vld (dmi_resp_valid),
+    .dm_rsp_rdy (dmi_resp_ready),
+    .dm_rsp_bits(dmi_resp      ),
+
+    // --- Others ---
+    .*
 );
 
 // ----------------------------------------------
