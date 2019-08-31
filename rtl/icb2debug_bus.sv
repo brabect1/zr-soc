@@ -342,10 +342,10 @@ always_comb begin: p_icb_rsp_mux
         icb_rsp_rdata = '0;
 end: p_icb_rsp_mux
 
-assign dtm_req_bits[DEBUG_DATA_BITS+DEBUG_OP_BITS-1:DEBUG_OP_BITS] = {
+assign dtm_req_bits[DEBUG_DATA_BITS-1:0] = {
     reg_dbus_req_dword
 };
-assign dtm_req_bits[DEBUG_OP_BITS-1:0] = dbus_req_op;
+assign dtm_req_bits[DEBUG_OP_BITS+DEBUG_DATA_BITS-1:DEBUG_DATA_BITS] = dbus_req_op;
 assign dtm_req_bits[DBUS_REQ_BITS-1:DEBUG_OP_BITS+DEBUG_DATA_BITS] = reg_dbus_req_others[DBUS_OTHERS_LEN-1:2+DEBUG_OP_BITS];
 
 assign dtm_resp_ready = dtm_resp_valid;

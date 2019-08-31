@@ -318,19 +318,18 @@ assign dm_slave_data_req = data_req_o & ((data_addr_o & ~DM_ADDR_MASK) == (DM_AD
 assign dm_instr_gnt_i = dm_instr_sel & dm_slave_inst_req;
 assign dm_data_err_i = 1'b0;
 assign dm_data_gnt_i = ~dm_instr_sel & dm_slave_data_req;
+assign dm_data_rdata_i = dm_data_rvalid_i ? dm_slave_rdata : '0;
 
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         dm_instr_rvalid_i <= 1'b0;
         dm_instr_rdata_i <= '0;
         dm_data_rvalid_i <= 1'b0;
-        dm_data_rdata_i <= '0;
     end
     else begin
         dm_instr_rvalid_i <= dm_instr_sel & dm_slave_inst_req;
         dm_instr_rdata_i  <= (dm_instr_sel & dm_slave_inst_req) ? dm_slave_rdata : '0;
         dm_data_rvalid_i <= ~dm_instr_sel & dm_slave_data_req;
-        dm_data_rdata_i <= (~dm_instr_sel & dm_slave_data_req) ? dm_slave_rdata : '0;
     end
 end
 
