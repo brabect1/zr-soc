@@ -98,6 +98,11 @@ To run a single test:
     # or run as a single test
     make test-rv32ui-p-xori
 
+To run a single test from other than pre-compiled ISA tests (can be used to
+run even non-ISA tests):
+
+    make test-rv32ui-p-xori isa_test_dir=../isa-tests/rebuild
+
 Troubleshoot
 ------------
 
