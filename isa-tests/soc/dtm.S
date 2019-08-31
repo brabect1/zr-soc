@@ -55,6 +55,12 @@
 
 #define DM_DRAM_OFST 0x400
 
+#define DM_HALTED_OFST 256
+#define DM_GOING_OFST 260
+#define DM_RESUMING_OFST 264
+#define DM_EXCEPTION_OFST 268
+
+//---->>>> TBRABEC (31-Aug-2019): To be deprecated (no longer used with DM v0.13).
 #define DM_CLEARDEBINT_OFST 256
 #define DM_CLEARDEBINT_RSTV 0x00000000
 #define DM_CLEARDEBINT_MASK 0x00000001
@@ -62,19 +68,29 @@
 #define DM_HALTNOT_OFST 268
 #define DM_HALTNOT_RSTV 0x00000000
 #define DM_HALTNOT_MASK 0x00000001
+//<<<<----
 
 #define DBUS_DRAM_OFST      0x00
 #define DBUS_DMCONTROL_OFST 0x10
 #define DBUS_DMCONTROL_RSTV 0x00000000
 
-#define DBUS_DMINFO_OFST    0x11
-#define DBUS_DMINFO_RSTV    0x00001821
+#define DBUS_DMSTATUS_OFST    0x11
+#define DBUS_DMSTATUS_RSTV    0x000c0c82
 
-#define DBUS_HALTSTAT_OFST  0x1c
-#define DBUS_HALTSTAT_RSTV  0x00000000
+#define DBUS_HARTINFO_OFST  0x12
+#define DBUS_HARTINFO_RSTV  0x00212380
+
+#define DBUS_HALTSUM_OFST  0x13
+#define DBUS_HALTSUM_RSTV  0x00000000
+
+#define DBUS_HAWINSEL_OFST  0x14
+#define DBUS_HAWINSEL_RSTV  0x00000000
+
+#define DBUS_HAWIN_OFST  0x15
+#define DBUS_HAWIN_RSTV  0x00000000
 
 #define TEST_DTM2DM_WR( testnum, value, irq, haltnot, addr ) \
-    .set others,(irq&1)<<1 | (haltnot&1) | (addr<<4) | DTM_REQ_WR<<2; \
+    .set others,(addr<<4) | DTM_REQ_WR<<2; \
     li x5, DTM_BASE; \
     li x6, value; \
     sw x6, DTM_REQ_DWORD_OFST(x5); \
@@ -132,41 +148,58 @@ test_read_write:
     TEST_RW_ADDR( 12, 0x55555555, DTM_REQ_DWORD_MASK, DTM_REQ_DWORD_OFST, DTM_BASE )
     TEST_RW_ADDR( 13, 0x00000000, DTM_REQ_DWORD_MASK, DTM_REQ_DWORD_OFST, DTM_BASE )
 
-    TEST_RW_ADDR( 20, 0xFFFFFFFF, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
-    TEST_RW_ADDR( 21, 0xaaaaaaaa, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
-    TEST_RW_ADDR( 22, 0x55555555, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
-    TEST_RW_ADDR( 23, 0x00000000, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
+//---->>>> tbrabec (31-Aug-2019): DM slave flag interface (halted, going, resuming)
+//         has only write path and write effects can be observed only indirectly.
+//    TEST_RW_ADDR( 20, 0xFFFFFFFF, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
+//    TEST_RW_ADDR( 21, 0xaaaaaaaa, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
+//    TEST_RW_ADDR( 22, 0x55555555, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
+//    TEST_RW_ADDR( 23, 0x00000000, DM_CLEARDEBINT_MASK, DM_CLEARDEBINT_OFST, DM_BASE )
+//<<<<----
 
     # RW test of the HALTNOT bus access appears later as it may affect
     # testing of the HALTNOT flag in DMCONTROL.
 
-test_dram_dbusaccess:
-    TEST_DTM2DM_WR( 30, 0xaaaaaaaa, 0, 0, 0 )
-    TEST_DTM2DM_RD( 31, 0xaaaaaaaa, 0, 0, 0 )
+    # 1st we need to turn on DM active in dmctrl as DM would remain
+    # reset otherwise.
+activate_dm:
+    TEST_DTM2DM_WR( 20, 0x00000001, 0, 0, 16 )
 
-    TEST_DTM2DM_WR( 32, 0x55555555, 0, 0, 1 )
-    TEST_DTM2DM_WR( 33, 0xFFFFFFFF, 0, 0, 2 )
+    # Note: DM implementation presently implements only two abstract
+    # data words.
+test_abstract_data_dmiaccess:
+    TEST_DTM2DM_WR( 30, 0xaaaaaaaa, 0, 0, 4 )
+    TEST_DTM2DM_RD( 31, 0xaaaaaaaa, 0, 0, 4 )
 
-    TEST_DTM2DM_RD( 33, 0x55555555, 0, 0, 1 )
-    TEST_DTM2DM_RD( 34, 0xFFFFFFFF, 0, 0, 2 )
+    TEST_DTM2DM_WR( 32, 0x55555555, 0, 0, 4 )
+    TEST_DTM2DM_WR( 33, 0xFFFFFFFF, 0, 0, 5 )
+//    TEST_DTM2DM_WR( 34, 0xaaaaaaaa, 0, 0, 7 )
 
-test_dram_busaccess:
-    TEST_LD_ADDR( 40, lw, 0xaaaaaaaa,  0x400,  DM_BASE )
-    TEST_LD_ADDR( 41, lw, 0x55555555,  0x404,  DM_BASE )
-    TEST_LD_ADDR( 42, lw, 0xffffffff,  0x408,  DM_BASE )
+    TEST_DTM2DM_RD( 35, 0x55555555, 0, 0, 4 )
+    TEST_DTM2DM_RD( 36, 0xFFFFFFFF, 0, 0, 5 )
+//    TEST_DTM2DM_RD( 37, 0xaaaaaaaa, 0, 0, 7 )
 
-    TEST_RW_ADDR( 50, 0x55555555, 0xffffffff, 0x400, DM_BASE )
-    TEST_RW_ADDR( 51, 0xaaaaaaaa, 0xffffffff, 0x404, DM_BASE )
-    TEST_RW_ADDR( 52, 0x00000000, 0xffffffff, 0x408, DM_BASE )
+test_abstract_data_busaccess:
+    TEST_LD_ADDR( 41, lw, 0x55555555,  0x380,  DM_BASE )
+    TEST_LD_ADDR( 42, lw, 0xffffffff,  0x384,  DM_BASE )
+//    TEST_LD_ADDR( 43, lw, 0xaaaaaaaa,  0x38c,  DM_BASE )
 
-    TEST_DTM2DM_RD( 60, 0x00000000, 0, 0, 2 )
-    TEST_DTM2DM_RD( 61, 0xaaaaaaaa, 0, 0, 1 )
-    TEST_DTM2DM_RD( 62, 0x55555555, 0, 0, 0 )
+    TEST_RW_ADDR( 50, 0x00000000, 0xffffffff, 0x380, DM_BASE )
+    TEST_RW_ADDR( 51, 0xaaaaaaaa, 0xffffffff, 0x384, DM_BASE )
+//    TEST_RW_ADDR( 52, 0xffffffff, 0xffffffff, 0x38C, DM_BASE )
+//    TEST_RW_ADDR( 53, 0x55555555, 0xffffffff, 0x388, DM_BASE )
+
+    TEST_DTM2DM_RD( 60, 0xaaaaaaaa, 0, 0, 5 )
+    TEST_DTM2DM_RD( 61, 0x00000000, 0, 0, 4 )
+//    TEST_DTM2DM_RD( 62, 0x55555555, 0, 0, 6 )
+//    TEST_DTM2DM_RD( 63, 0xffffffff, 0, 0, 7 )
 
 test_dbus_reset:
-    TEST_DTM2DM_RD( 70, DBUS_DMCONTROL_RSTV, 0, 0, DBUS_DMCONTROL_OFST )
-    TEST_DTM2DM_RD( 71, DBUS_DMINFO_RSTV,    0, 0, DBUS_DMINFO_OFST )
-    TEST_DTM2DM_RD( 72, DBUS_HALTSTAT_RSTV,  0, 0, DBUS_HALTSTAT_OFST )
+//    TEST_DTM2DM_RD( 70, DBUS_DMCONTROL_RSTV, 0, 0, DBUS_DMCONTROL_OFST )
+    TEST_DTM2DM_RD( 71, DBUS_DMSTATUS_RSTV,    0, 0, DBUS_DMSTATUS_OFST )
+    TEST_DTM2DM_RD( 72, DBUS_HARTINFO_RSTV,    0, 0, DBUS_HARTINFO_OFST )
+    TEST_DTM2DM_RD( 73, DBUS_HALTSUM_RSTV,     0, 0, DBUS_HALTSUM_OFST )
+    TEST_DTM2DM_RD( 74, DBUS_HAWINSEL_RSTV,    0, 0, DBUS_HAWINSEL_OFST )
+    TEST_DTM2DM_RD( 75, DBUS_HAWIN_RSTV,       0, 0, DBUS_HAWIN_OFST )
 
 test_haltnot:
     # Test that writing to the HALTNOT bus register with the presently selecte
