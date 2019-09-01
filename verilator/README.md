@@ -118,7 +118,7 @@ Makefile. Note that VCD dump is disabled by default.
 
 To change or disable the max number of clock cycles being simulated, use the
 `-c <num>` option to the simulation executable. `<num>` value of zero or below
-disables the time, a positive value sets the timeout to `2**<num>` clock cycles.
+disables the timeout, a positive value sets the timeout to `2**<num>` clock cycles.
 Again, use the `sflags` option to the Makefile (can be combined with other
 simulation executable options).
 
@@ -141,6 +141,11 @@ generates the system clock and reset, and another *JTAG* thread runs the OpenOCD
 remote bitbang server and uses it to drive the JTAG interface.
 
 Presently the remote bitbang server runs at a hardcoded port 9823.
+
+To tryout an OpenOCD connection, you may use an infinite loop test program
+with disabled timeout:
+
+    cd verilator && make build && make test-soc-p-infi-loop sflags='-c 0'
 
 To connect to the remote bitbang server, the OpenOCD has to be configured and
 built with remote bitbang support (requires `libtool` and `automake`).
