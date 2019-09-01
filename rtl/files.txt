@@ -1,10 +1,3 @@
-riscv_jtag_dm/cdc_rx.sv
-riscv_jtag_dm/cdc_tx.sv
-riscv_jtag_dm/debug_ram.sv
-riscv_jtag_dm/riscv_dm_0p11.sv
-riscv_jtag_dm/riscv_jtag_dtm_0p11.sv
-riscv_jtag_dm/sirv_debug_csr.v
-riscv_jtag_dm/sirv_debug_rom.v
 icb2debug_bus.sv
 perips/e203_subsys_perips.sv
 perips/sirv_flash_qspi.v
@@ -53,7 +46,7 @@ ibex/ibex_prefetch_buffer.sv
 ibex/ibex_register_file_ff.sv
 #ibex/ibex_tracer.sv
 #ibex/ibex_tracer_pkg.sv
-#---->>>>
+
 pulp/fifo_v3.sv
 pulp/fifo_v2.sv
 pulp/cdc_2phase.sv
@@ -68,6 +61,8 @@ riscv-dbg/src/dm_top.sv
 riscv-dbg/src/dmi_cdc.sv
 riscv-dbg/src/dmi_jtag.sv
 riscv-dbg/src/dmi_jtag_tap.sv
+#---->>>>
+dmi_arbiter.sv
 #<<<<----
 zr_coreplex.sv
 zr_soc.sv
