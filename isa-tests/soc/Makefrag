@@ -12,6 +12,7 @@ soc_sc_tests = \
 	wdog-regs \
     dtm \
     perf-cnts \
+    infi-loop \
 
 soc_p_tests = $(addprefix soc-p-, $(soc_sc_tests))
 

@@ -60,6 +60,19 @@
 #define DM_RESUMING_OFST 264
 #define DM_EXCEPTION_OFST 268
 
+#define DM_DATA0_OFST 0x380
+#define DM_DATA1_OFST 0x384
+#define DM_DATA2_OFST 0x388
+#define DM_DATA3_OFST 0x38c
+
+// The start of the Program Buffer is relative to the Data Start
+// (i.e. DM_DATA0_OFST) and depends on the buffer size (which is
+// currently set to 8).
+#define DM_PBUF0_OFST 0x360
+#define DM_PBUF1_OFST 0x364
+#define DM_PBUF2_OFST 0x368
+#define DM_PBUF3_OFST 0x36c
+
 //---->>>> TBRABEC (31-Aug-2019): To be deprecated (no longer used with DM v0.13).
 #define DM_CLEARDEBINT_OFST 256
 #define DM_CLEARDEBINT_RSTV 0x00000000
@@ -73,6 +86,11 @@
 #define DBUS_DRAM_OFST      0x00
 #define DBUS_DMCONTROL_OFST 0x10
 #define DBUS_DMCONTROL_RSTV 0x00000000
+
+#define DBUS_DATA0_OFST    0x04
+#define DBUS_DATA1_OFST    0x05
+#define DBUS_DATA2_OFST    0x06
+#define DBUS_DATA3_OFST    0x07
 
 #define DBUS_DMSTATUS_OFST    0x11
 #define DBUS_DMSTATUS_RSTV    0x000c0c82
@@ -88,6 +106,12 @@
 
 #define DBUS_HAWIN_OFST  0x15
 #define DBUS_HAWIN_RSTV  0x00000000
+
+#define DBUS_PBUF0_OFST    0x20
+#define DBUS_PBUF1_OFST    0x21
+#define DBUS_PBUF2_OFST    0x22
+#define DBUS_PBUF3_OFST    0x23
+
 
 #define TEST_DTM2DM_WR( testnum, value, irq, haltnot, addr ) \
     .set others,(addr<<4) | DTM_REQ_WR<<2; \
@@ -162,37 +186,41 @@ test_read_write:
     # 1st we need to turn on DM active in dmctrl as DM would remain
     # reset otherwise.
 activate_dm:
-    TEST_DTM2DM_WR( 20, 0x00000001, 0, 0, 16 )
+    TEST_DTM2DM_WR( 20, 0x00000001, 0, 0, DBUS_DMCONTROL_OFST )
 
+    # Test DMI access to Abstract Data registers.
     # Note: DM implementation presently implements only two abstract
     # data words.
 test_abstract_data_dmiaccess:
-    TEST_DTM2DM_WR( 30, 0xaaaaaaaa, 0, 0, 4 )
-    TEST_DTM2DM_RD( 31, 0xaaaaaaaa, 0, 0, 4 )
+    TEST_DTM2DM_WR( 30, 0xaaaaaaaa, 0, 0, DBUS_DATA0_OFST )
+    TEST_DTM2DM_RD( 31, 0xaaaaaaaa, 0, 0, DBUS_DATA0_OFST )
 
-    TEST_DTM2DM_WR( 32, 0x55555555, 0, 0, 4 )
-    TEST_DTM2DM_WR( 33, 0xFFFFFFFF, 0, 0, 5 )
-//    TEST_DTM2DM_WR( 34, 0xaaaaaaaa, 0, 0, 7 )
+    TEST_DTM2DM_WR( 32, 0x55555555, 0, 0, DBUS_DATA0_OFST )
+    TEST_DTM2DM_WR( 33, 0xFFFFFFFF, 0, 0, DBUS_DATA1_OFST )
+//    TEST_DTM2DM_WR( 34, 0xaaaaaaaa, 0, 0, DBUS_DATA3_OFTS )
 
-    TEST_DTM2DM_RD( 35, 0x55555555, 0, 0, 4 )
-    TEST_DTM2DM_RD( 36, 0xFFFFFFFF, 0, 0, 5 )
-//    TEST_DTM2DM_RD( 37, 0xaaaaaaaa, 0, 0, 7 )
+    TEST_DTM2DM_RD( 35, 0x55555555, 0, 0, DBUS_DATA0_OFST )
+    TEST_DTM2DM_RD( 36, 0xFFFFFFFF, 0, 0, DBUS_DATA1_OFST )
+//    TEST_DTM2DM_RD( 37, 0xaaaaaaaa, 0, 0, DBUS_DATA3_OFST )
 
+    # Test System Bus access to Abstract Data registers.
 test_abstract_data_busaccess:
-    TEST_LD_ADDR( 41, lw, 0x55555555,  0x380,  DM_BASE )
-    TEST_LD_ADDR( 42, lw, 0xffffffff,  0x384,  DM_BASE )
-//    TEST_LD_ADDR( 43, lw, 0xaaaaaaaa,  0x38c,  DM_BASE )
+    TEST_LD_ADDR( 41, lw, 0x55555555,  DM_DATA0_OFST,  DM_BASE )
+    TEST_LD_ADDR( 42, lw, 0xffffffff,  DM_DATA1_OFST,  DM_BASE )
+//    TEST_LD_ADDR( 43, lw, 0xaaaaaaaa,  DM_DATA3_OFST,  DM_BASE )
 
-    TEST_RW_ADDR( 50, 0x00000000, 0xffffffff, 0x380, DM_BASE )
-    TEST_RW_ADDR( 51, 0xaaaaaaaa, 0xffffffff, 0x384, DM_BASE )
-//    TEST_RW_ADDR( 52, 0xffffffff, 0xffffffff, 0x38C, DM_BASE )
-//    TEST_RW_ADDR( 53, 0x55555555, 0xffffffff, 0x388, DM_BASE )
+    TEST_RW_ADDR( 50, 0x00000000, 0xffffffff, DM_DATA0_OFST, DM_BASE )
+    TEST_RW_ADDR( 51, 0xaaaaaaaa, 0xffffffff, DM_DATA1_OFST, DM_BASE )
+//    TEST_RW_ADDR( 52, 0xffffffff, 0xffffffff, DM_DATA3_OFST, DM_BASE )
+//    TEST_RW_ADDR( 53, 0x55555555, 0xffffffff, DM_DATA2_OFST, DM_BASE )
 
-    TEST_DTM2DM_RD( 60, 0xaaaaaaaa, 0, 0, 5 )
-    TEST_DTM2DM_RD( 61, 0x00000000, 0, 0, 4 )
-//    TEST_DTM2DM_RD( 62, 0x55555555, 0, 0, 6 )
-//    TEST_DTM2DM_RD( 63, 0xffffffff, 0, 0, 7 )
+    TEST_DTM2DM_RD( 60, 0xaaaaaaaa, 0, 0, DBUS_DATA1_OFST )
+    TEST_DTM2DM_RD( 61, 0x00000000, 0, 0, DBUS_DATA0_OFST )
+//    TEST_DTM2DM_RD( 62, 0x55555555, 0, 0, DBUS_DATA2_OFST )
+//    TEST_DTM2DM_RD( 63, 0xffffffff, 0, 0, DBUS_DATA3_OFST )
 
+
+    # Test default (after reset) values of certain DMI registers.
 test_dbus_reset:
 //    TEST_DTM2DM_RD( 70, DBUS_DMCONTROL_RSTV, 0, 0, DBUS_DMCONTROL_OFST )
     TEST_DTM2DM_RD( 71, DBUS_DMSTATUS_RSTV,    0, 0, DBUS_DMSTATUS_OFST )
@@ -201,6 +229,42 @@ test_dbus_reset:
     TEST_DTM2DM_RD( 74, DBUS_HAWINSEL_RSTV,    0, 0, DBUS_HAWINSEL_OFST )
     TEST_DTM2DM_RD( 75, DBUS_HAWIN_RSTV,       0, 0, DBUS_HAWIN_OFST )
 
+    # Test DMI access to Program Buffer registers.
+test_pbuf_data_dmiaccess:
+    TEST_DTM2DM_WR( 80, 0xaaaaaaaa, 0, 0, DBUS_PBUF0_OFST )
+    TEST_DTM2DM_RD( 81, 0xaaaaaaaa, 0, 0, DBUS_PBUF0_OFST )
+
+    TEST_DTM2DM_WR( 82, 0x55555555, 0, 0, DBUS_PBUF0_OFST )
+    TEST_DTM2DM_WR( 83, 0xFFFFFFFF, 0, 0, DBUS_PBUF1_OFST )
+    TEST_DTM2DM_WR( 84, 0xaaaaaaaa, 0, 0, DBUS_PBUF3_OFST )
+    TEST_DTM2DM_WR( 85, 0x81000099, 0, 0, DBUS_PBUF2_OFST )
+
+    TEST_DTM2DM_RD( 86, 0x55555555, 0, 0, DBUS_PBUF0_OFST )
+    TEST_DTM2DM_RD( 87, 0xFFFFFFFF, 0, 0, DBUS_PBUF1_OFST )
+    TEST_DTM2DM_RD( 88, 0xaaaaaaaa, 0, 0, DBUS_PBUF3_OFST )
+    TEST_DTM2DM_RD( 89, 0x81000099, 0, 0, DBUS_PBUF2_OFST )
+
+    # Test System Bus access to Program Buffer registers. This access
+    # is read-only.
+test_pbuf_data_busaccess:
+    TEST_LD_ADDR(100, lw, 0x55555555,  DM_PBUF0_OFST,  DM_BASE )
+    TEST_LD_ADDR(101, lw, 0xffffffff,  DM_PBUF1_OFST,  DM_BASE )
+    TEST_LD_ADDR(102, lw, 0xaaaaaaaa,  DM_PBUF3_OFST,  DM_BASE )
+    TEST_LD_ADDR(103, lw, 0x81000099,  DM_PBUF2_OFST,  DM_BASE )
+
+    TEST_RO_ADDR(110, 0x00000000, 0x55555555, DM_PBUF0_OFST, DM_BASE )
+    TEST_RO_ADDR(111, 0xaaaaaaaa, 0xffffffff, DM_PBUF1_OFST, DM_BASE )
+    TEST_RO_ADDR(112, 0xffffffff, 0xaaaaaaaa, DM_PBUF3_OFST, DM_BASE )
+    TEST_RO_ADDR(113, 0x00000000, 0x81000099, DM_PBUF2_OFST, DM_BASE )
+
+    # Remember to first enable `ebreak` in DCSR.
+breakpoint:
+    csrr x6, dcsr
+    li x5, 0x00008000
+    or x6,x6,x5
+    csrw dcsr, x6
+    ebreak;
+
 test_haltnot:
     # Test that writing to the HALTNOT bus register with the presently selecte
     # hard ID (in the DMCONTROL Debug Register) will be reflected in DMCONTROL
@@ -208,7 +272,7 @@ test_haltnot:
     li x5, DM_BASE
     li x6, 0
     sw x6, DM_HALTNOT_OFST(x5)
-    TEST_DTM2DM_RD( 80, DBUS_DMCONTROL_RSTV, 0, 1, DBUS_DMCONTROL_OFST )
+    TEST_DTM2DM_RD(500, DBUS_DMCONTROL_RSTV, 0, 1, DBUS_DMCONTROL_OFST )
     TEST_DTM2DM_RD( 81, 0x55555555, 0, 1, 0 )
     TEST_DTM2DM_RD( 82, 0xaaaaaaaa, 0, 1, 1 )
 
