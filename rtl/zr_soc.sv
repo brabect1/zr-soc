@@ -27,12 +27,24 @@ module zr_soc #(
     parameter int TCM_AWIDTH = 15, // number of address LSBs to use for TCM addressing
     parameter logic[31:0] BOOT_ADDR = TCM_ADDR_BASE
 ) (
+
+    // JTAG Debug Interface
+    input  logic tdi,
+    output logic tdo,
+    output logic tdo_oe,
+    input  logic tck,
+    input  logic tms,
+    input  logic trstn,
+
+    // GPIO Interface
+    // (multiplexes GPIOs with IOs of other peripherals)
     input  logic[31:0] io_gpio_i,
     output logic[31:0] io_gpio_o,
     output logic[31:0] io_gpio_oe,
     output logic[31:0] io_gpio_pue,
     output logic[31:0] io_gpio_ds,
 
+    // QSPI Interface
     output logic      io_qspi_sck_o,
     output logic      io_qspi_sck_oe,
     output logic      io_qspi_sck_pue,
@@ -88,12 +100,13 @@ zr_coreplex #(
     .irq_nm_i(1'b0),       // non-maskeable interrupt
 
     // jtag debug interface - tie off for now
-    .tck(1'b0),    // JTAG test clock pad
-    .tms(1'b0),    // JTAG test mode select pad
-    .trstn(1'b0),  // JTAG test reset pad
-    .tdi(1'b0),    // JTAG test data input pad
-    .tdo_o(    ),  // JTAG test data output pad
-    .tdo_t(    ),  // Data out output enable
+    .tck,     // JTAG test clock pad
+    .tms,     // JTAG test mode select pad
+    .trstn,   // JTAG test reset pad
+    .tdi,     // JTAG test data input pad
+    .tdo,     // JTAG test data output pad
+    .tdo_oe,  // Data out output enable
+
     .pi_icb_rsp_err(1'b0),
     .*
 );

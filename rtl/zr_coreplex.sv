@@ -59,8 +59,8 @@ module zr_coreplex #(
     input  logic         tms,    // JTAG test mode select pad
     input  logic         trstn,  // JTAG test reset pad
     input  logic         tdi,    // JTAG test data input pad
-    output logic         tdo_o,  // JTAG test data output pad
-    output logic         tdo_t,  // Data out output enable
+    output logic         tdo,    // JTAG test data output pad
+    output logic         tdo_oe, // JTAG test data output enable
 
     input  logic clk,
     input  logic rst_n
@@ -114,10 +114,13 @@ ibex_core #(
 
     // Debug interface (RV v0.13)
 //TODO    .debug_req_i( dbg_irq[0] ),
-    .debug_req_i( 1'b0 ),
+    .debug_req_i( dm_dbg_irq[0] ),
 
     // CPU Control Signals
     .fetch_enable_i(1'b1),
+
+    // misc
+    .instr_err_i(1'b0),
 
     // other ports
     .*
@@ -316,6 +319,7 @@ assign dm_slave_inst_req = instr_req_o & ((instr_addr_o & ~DM_ADDR_MASK) == (DM_
 assign dm_slave_data_req = data_req_o & ((data_addr_o & ~DM_ADDR_MASK) == (DM_ADDR_BASE & ~DM_ADDR_MASK));
 
 assign dm_instr_gnt_i = dm_instr_sel & dm_slave_inst_req;
+assign dm_instr_rdata_i = dm_instr_rvalid_i ? dm_slave_rdata : '0;
 assign dm_data_err_i = 1'b0;
 assign dm_data_gnt_i = ~dm_instr_sel & dm_slave_data_req;
 assign dm_data_rdata_i = dm_data_rvalid_i ? dm_slave_rdata : '0;
@@ -323,12 +327,10 @@ assign dm_data_rdata_i = dm_data_rvalid_i ? dm_slave_rdata : '0;
 always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         dm_instr_rvalid_i <= 1'b0;
-        dm_instr_rdata_i <= '0;
         dm_data_rvalid_i <= 1'b0;
     end
     else begin
         dm_instr_rvalid_i <= dm_instr_sel & dm_slave_inst_req;
-        dm_instr_rdata_i  <= (dm_instr_sel & dm_slave_inst_req) ? dm_slave_rdata : '0;
         dm_data_rvalid_i <= ~dm_instr_sel & dm_slave_data_req;
     end
 end
@@ -453,8 +455,8 @@ dmi_jtag #(
     .tms_i                ( tms ),
     .trst_ni              ( trstn ),
     .td_i                 ( tdi ),
-    .td_o                 ( tdo_o ),
-    .tdo_oe_o             ()
+    .td_o                 ( tdo ),
+    .tdo_oe_o             ( tdo_oe )
 );
 
 // ----------------------------------------------
