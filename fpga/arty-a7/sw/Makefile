@@ -27,11 +27,11 @@ progs = \
 
 
 .PHONY: all
-all: $(progs:%=%.elf)
+all: $(progs:%=%.elf) $(progs:%=%.bram_tcm)
 
 .PHONY: clean
 clean:
-	rm -rf $(progs:%=%.elf) $(progs:%=%.verilog) $(progs:%=%.dump)
+	rm -rf $(progs:%=%.elf) $(progs:%=%.verilog) $(progs:%=%.dump) $(progs:%=%.bram_tcm)
 
 .PHONY: dummy
 dummy:

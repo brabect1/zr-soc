@@ -46,6 +46,7 @@ set scriptdir [file dirname [info script]]
 set commondir [file dirname $scriptdir]
 set srcdir [file join $commondir rtl]
 set constrsdir [file join $commondir constrs]
+set simsrcdir [file join $commondir verif src]
 
 set wrkdir [file join [pwd] work/vivado]
 set ipdir [file join $wrkdir ip]
@@ -70,58 +71,62 @@ set_property -dict [list \
 #  return $findlist
 #}
 
-
+# RTL fileset
+# -----------
 if {[get_filesets -quiet sources_1] eq ""} {
-  create_fileset -srcset sources_1
+    create_fileset -srcset sources_1
 }
-set obj [current_fileset]
+set obj [get_filesets sources_1]
 
-#set srcmainverilogfiles [recglob $srcdir "*.v"]
-#add_files -norecurse -fileset $obj $srcmainverilogfiles
+# add RTL files from within this FPGA project
+# (these are typically a top-level integration and FPGA-specific files)
 set fpga_shell_files [glob -nocomplain -directory $srcdir "*.*v"]
-add_files -norecurse -fileset $obj ${fpga_shell_files}
+add_files -norecurse -fileset ${obj} ${fpga_shell_files}
 
-#if {[info exists ::env(VSRC_EXTRA)]} {
-#  set extra_vsrcs [split $::env(VSRC_EXTRA)]
-#  foreach extra_vsrc $extra_vsrcs {
-#    add_files -norecurse -fileset $obj $extra_vsrc
-#  }
-#}
-
+# add RTL files passed by the user
+# (this is typically all the FPGA-independent RTL code)
 if {[info exists ::env(VSRC)]} {
-  add_files -norecurse -fileset $obj [split [string trim $::env(VSRC)]]
+    add_files -norecurse -fileset ${obj} [split [string trim $::env(VSRC)]]
 }
 
+# Verilog/SV include paths
 if {[info exists ::env(VINC_DIRS)]} {
-  set_property include_dirs [split [string trim $::env(VINC_DIRS)]] [current_fileset]
+    set_property include_dirs [split [string trim $::env(VINC_DIRS)]] [current_fileset]
 }
 
 # Verilog defines passed to synthesis
 set defs {SYNTHESIS}
 if {[info exists ::env(TCM_INIT)]} {
-  lappend defs TCM_INIT_FILE=\"$::env(TCM_INIT)\"
+    lappend defs TCM_INIT_FILE=\"$::env(TCM_INIT)\"
 }
 set_property verilog_define ${defs} [current_fileset]
 
+# set top module name (if defined)
+if {[info exists ::env(TOP)]} {
+    set_property top "${::env(TOP)}" [current_fileset];
+    update_compile_order -fileset [current_fileset];
+}
 
-### These paths and files should come from the caller, not within this script.
-##if {[file exists [file join $srcdir include verilog]]} {
-##  add_files -norecurse -fileset $obj [file join $srcdir include verilog DebugTransportModuleJtag.v]
-##  add_files -norecurse -fileset $obj [file join $srcdir include verilog AsyncResetReg.v]
-##}
-#
-#if {[get_filesets -quiet sim_1] eq ""} {
-#  create_fileset -simset sim_1
-#}
-#set obj [current_fileset -simset]
-#add_files -norecurse -fileset $obj [glob -directory $srcdir {*.v}]
-#set_property TOP {tb} $obj
-
+# Design constraints
+# ------------------
 if {[get_filesets -quiet constrs_1] eq ""} {
   create_fileset -constrset constrs_1
 }
-set obj [current_fileset -constrset]
-add_files -norecurse -fileset $obj [glob -directory $constrsdir {*.xdc}]
+set obj [get_filesets constrs_1]
+add_files -norecurse -fileset ${obj} [glob -directory $constrsdir {*.xdc}]
+
+# Simulation fileset
+# ------------------
+if {[get_filesets -quiet sim_1] eq ""} {
+    set obj [create_fileset -simset sim_1];
+}
+set obj [get_filesets sim_1]
+
+add_files -norecurse -fileset ${obj} [glob -directory ${simsrcdir} {*.*v}]
+
+if {[info exists ::env(SIMTOP)]} {
+    set_property top "${::env(SIMTOP)}" ${obj};
+}
 
 # -----------------------------------------------
 # Create IPs

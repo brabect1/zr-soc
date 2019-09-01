@@ -21,6 +21,12 @@
 # Need to constrain the shell as we use some advanced scripting.
 SHELL = bash
 
+# Name of the top module.
+TOP ?= arty_a7_shell
+
+# Name of the testbench module.
+SIMTOP ?= tb
+
 # Path to a file containing a list Verilog/SystemVerilog files to synthesize.
 FLIST ?=
 
@@ -64,6 +70,8 @@ endif
 
 export VSRC
 export VINC_DIRS
+$(if $(TOP),$(eval export TOP))
+$(if $(SIMTOP),$(eval export SIMTOP))
 
 dummy:
 	@echo "TCM_INIT=$${TCM_INIT}"
@@ -74,5 +82,9 @@ setup: scripts/prologue_setup.tcl $(VSRC) $(VINC_DIRS) $(TCM_INIT)
         -nojournal \
         -mode gui \
         -source scripts/prologue_setup.tcl
+
+.PHONY: clean
+clean:
+	rm -rf work vivado.log
 
 # while read -r l; do if [[ $l =~ ^@ ]]; then echo $l; continue; fi; i=0; k=""; for ll in $l; do k="${ll}${k}"; (( i+=1 )); if (( i > 3 )); then i=0; echo $k; k=""; fi; done; done < isa/rebuild/soc-p-uart-regs.verilog
