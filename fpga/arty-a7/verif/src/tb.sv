@@ -52,6 +52,19 @@ wire[3:0]    qspi_dq;
 logic uart_rxd;
 logic uart_txd;
 
+// JTAG
+wire jtag_trstn;
+wire jtag_tdo;
+wire jtag_tck;
+wire jtag_tdi;
+wire jtag_tms;
+
+assign jtag_tdi = 1'b1;
+assign jtag_tms = 1'b1;
+assign jtag_tck = 1'b1;
+assign jtag_trstn = 1'b0;
+assign jtag_tdo = 1'bz;
+
 assign uart_rxd = 1'b1;
 assign qspi_dq = 'z;
 

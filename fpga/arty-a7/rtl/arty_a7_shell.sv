@@ -45,13 +45,13 @@ module arty_a7_shell (
     output logic        qspi_sck,
     inout  wire [3:0]   qspi_dq,
 
-//    // JD (used for JTAG connection)
-////    input wire jd_6, // SRST_n
-////    inout wire jd_1, // TRST_n
-//    inout wire jtag_tdo, // TDO
-//    inout wire jtag_tck, // TCK
-//    inout wire jtag_tdi, // TDI
-//    inout wire jtag_tms  // TMS
+    // JD (used for JTAG connection)
+//    input wire jd_6, // SRST_n
+    inout wire jtag_trstn, // TRST_n
+    inout wire jtag_tdo, // TDO
+    inout wire jtag_tck, // TCK
+    inout wire jtag_tdi, // TDI
+    inout wire jtag_tms, // TMS
 
     // UART0 (connected to micro USB)
     input  logic uart_rxd,
@@ -137,6 +137,12 @@ assign io_gpio_i = '{
 // ----------------------------------------------
 // System on Chip
 // ----------------------------------------------
+
+logic jtag_tdo_o;
+logic jtag_tdo_oe;
+
+assign jtag_tdo = jtag_tdo_oe ? jtag_tdo_o : 1'b1;
+
 zr_soc #(
     .RV32E(0),
     .RV32M(1),
@@ -148,10 +154,10 @@ zr_soc #(
     .TCM_AWIDTH(TCM_AWIDTH),
     .BOOT_ADDR(TCM_ADDR_BASE)
 ) u_soc (
-    .irq_i      ( 1'b0 ),
-    .irq_id_i   ( '0 ),
-    .irq_ack_o  ( ),
-    .irq_id_o   ( ),
+//TODO    .irq_i      ( 1'b0 ),
+//TODO    .irq_id_i   ( '0 ),
+//TODO    .irq_ack_o  ( ),
+//TODO    .irq_id_o   ( ),
 
     .io_gpio_ds ( ),
 
@@ -163,6 +169,13 @@ zr_soc #(
     .io_qspi_cs_0_pue   ( ),
     .io_qspi_dq_i       ( qspi_dq ),
     .io_qspi_dq_pue     ( ),
+
+    .tdi    ( jtag_tdi ),
+    .tck    ( jtag_tck ),
+    .tms    ( jtag_tms ),
+    .tdo    ( jtag_tdo_o ),
+    .tdo_oe ( jtag_tdo_oe ),
+    .trstn  ( jtag_trstn ),
 
     .clk(clk_16M),
     .rst_n(rst_n),
