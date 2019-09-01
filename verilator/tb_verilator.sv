@@ -31,7 +31,16 @@ module tb_verilator(
     output logic uart_rx_err,
     output int   uart_rx_data,
     input  wire  clk,
-    input  wire  rst_n
+    input  wire  rst_n,
+
+    input  logic tdi,
+    output logic tdo,
+    output logic tdo_oe,
+    input  logic tck,
+    input  logic tms,
+    input  logic trstn,
+
+    input  logic quit
 );
 
 `ifndef TCM_AWIDTH
@@ -44,12 +53,18 @@ module tb_verilator(
 `define GEN_IRQ_2POW_CYCS 13
 `endif
 
-// Forces the simulation to stop after 2**N clock cycles. This mechanism is
-// complementary to the similar one used in the C++ Verilator testbench
-// wrapper and it is up to users' preference which method they will use.
-`ifndef RUN_2POW_CYCS
-`define RUN_2POW_CYCS 20
-`endif
+//TODO // Forces the simulation to stop after 2**N clock cycles. This mechanism is
+//TODO // complementary to the similar one used in the C++ Verilator testbench
+//TODO // wrapper and it is up to users' preference which method they will use.
+//TODO `ifndef RUN_2POW_CYCS
+//TODO `define RUN_2POW_CYCS 20
+//TODO `endif
+
+// finish simulation on `quit` going high
+always @(posedge quit) begin
+    $display("Simulation indicated to quit ...");
+    $finish();
+end
 
 //`define TCM_INIT_FILE "/tmp/github/zr/bram_init.txt"
 `define CPU_TOP u_soc.u_cpu.u_core
@@ -166,13 +181,13 @@ always  @(pc_write_to_host_cnt) begin
 end
 end
 
-// watchdog
-always @(posedge clk) begin
-    if (cycle_count[`RUN_2POW_CYCS] == 1'b1) begin
-        $error("Time Out !!!");
-        $finish;
-    end
-end
+//TODO // watchdog
+//TODO always @(posedge clk) begin
+//TODO     if (cycle_count[`RUN_2POW_CYCS] == 1'b1) begin
+//TODO         $error("Time Out !!!");
+//TODO         $finish;
+//TODO     end
+//TODO end
 
 
 logic [7:0] itcm_mem [0:2**`TCM_AWIDTH-1];
@@ -222,13 +237,6 @@ initial begin
 `endif
     end
 end 
-
-wire jtag_TDI = 1'b0;
-wire jtag_TDO;
-wire jtag_TCK = 1'b0;
-wire jtag_TMS = 1'b0;
-wire jtag_TRST = 1'b0;
-wire jtag_DRV_TDO = 1'b0;
 
 logic irq_i;
 logic irq_ack_o;
@@ -301,23 +309,24 @@ spi_model#(.SIZE(2**16)) u_spi_dev(
 );
 
 
-logic irq_serviced;
-
-always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-        irq_i <= 1'b0;
-        irq_serviced <= 1'b0;
-    end
-    else if (`GEN_IRQ_2POW_CYCS > 0 && !irq_serviced) begin
-        if (irq_i & irq_ack_o) begin
-            irq_serviced <= 1'b1;
-            irq_i <= 1'b0;
-        end
-        else if (cycle_count[`GEN_IRQ_2POW_CYCS]) begin
-            irq_i <= 1'b1;
-        end
-    end
-end
+assign irq_i = 1'b0; //tbr/2019-Feb-10
+//tbr/2019-Feb-10 logic irq_serviced;
+//tbr/2019-Feb-10 
+//tbr/2019-Feb-10 always @(posedge clk or negedge rst_n) begin
+//tbr/2019-Feb-10     if (!rst_n) begin
+//tbr/2019-Feb-10         irq_i <= 1'b0;
+//tbr/2019-Feb-10         irq_serviced <= 1'b0;
+//tbr/2019-Feb-10     end
+//tbr/2019-Feb-10     else if (`GEN_IRQ_2POW_CYCS > 0 && !irq_serviced) begin
+//tbr/2019-Feb-10         if (irq_i & irq_ack_o) begin
+//tbr/2019-Feb-10             irq_serviced <= 1'b1;
+//tbr/2019-Feb-10             irq_i <= 1'b0;
+//tbr/2019-Feb-10         end
+//tbr/2019-Feb-10         else if (cycle_count[`GEN_IRQ_2POW_CYCS]) begin
+//tbr/2019-Feb-10             irq_i <= 1'b1;
+//tbr/2019-Feb-10         end
+//tbr/2019-Feb-10     end
+//tbr/2019-Feb-10 end
 
 
 uart_model u_uart_dev (

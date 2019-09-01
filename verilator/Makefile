@@ -30,11 +30,11 @@ vsrc = tb_verilator.sv spi_model.sv uart_model.sv \
        $(filter-out $(foreach f,dm_pkg.sv,$(vdir)/riscv-dbg/src/$(f)),$(wildcard $(vdir)/riscv-dbg/src/*.*v*)) \
        $(wildcard $(vdir)/riscv_jtag_dm/*.*v*) \
        $(wildcard $(vdir)/perips/*.*v*)
-csrc = sim.cpp
+csrc = rbb_server.cpp sim.cpp
 cflags =
 objdir = obj
-obj = $(csrc:%.cpp=%)
-vflags = $(if $(cflags),-CFLAGS "$(cflags)") --cc --exe --Mdir $(objdir) \
+obj = sim
+vflags = -CFLAGS "-I..$(if $(cflags), $(cflags))" -LDFLAGS "-lpthread" --cc --exe --Mdir $(objdir)  \
 	 --top-module tb_verilator \
 	 -Wno-WIDTH -Wno-UNOPTFLAT -Wno-CASEINCOMPLETE -Wno-LITENDIAN
 vflags_extra = --trace
