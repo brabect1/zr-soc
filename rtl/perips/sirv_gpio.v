@@ -30,25 +30,25 @@ module sirv_gpio(
   input   clock,
   input   reset,
   output  [31:0] gpio_irq,
-  output  io_in_0_a_ready,
-  input   io_in_0_a_valid,
-  input  [2:0] io_in_0_a_bits_opcode,
-  input  [2:0] io_in_0_a_bits_param,
-  input  [2:0] io_in_0_a_bits_size,
-  input  [4:0] io_in_0_a_bits_source,
-  input  [28:0] io_in_0_a_bits_address,
-  input  [3:0] io_in_0_a_bits_mask,
-  input  [31:0] io_in_0_a_bits_data,
-  input   io_in_0_d_ready,
-  output  io_in_0_d_valid,
-  output [2:0] io_in_0_d_bits_opcode,
-  output [1:0] io_in_0_d_bits_param,
-  output [2:0] io_in_0_d_bits_size,
-  output [4:0] io_in_0_d_bits_source,
-  output  io_in_0_d_bits_sink,
-  output [1:0] io_in_0_d_bits_addr_lo,
-  output [31:0] io_in_0_d_bits_data,
-  output  io_in_0_d_bits_error,
+  output  tl_a_ready,
+  input   tl_a_valid,
+  input  [2:0] tl_a_bits_opcode,
+  input  [2:0] tl_a_bits_param,
+  input  [2:0] tl_a_bits_size,
+  input  [4:0] tl_a_bits_source,
+  input  [28:0] tl_a_bits_address,
+  input  [3:0] tl_a_bits_mask,
+  input  [31:0] tl_a_bits_data,
+  input   tl_d_ready,
+  output  tl_d_valid,
+  output [2:0] tl_d_bits_opcode,
+  output [1:0] tl_d_bits_param,
+  output [2:0] tl_d_bits_size,
+  output [4:0] tl_d_bits_source,
+  output  tl_d_bits_sink,
+  output [1:0] tl_d_bits_addr_lo,
+  output [31:0] tl_d_bits_data,
+  output  tl_d_bits_error,
 
   input   [31:0] io_pads_i_ival,
   output  [31:0] io_pads_o_oval,
@@ -74,8 +74,8 @@ module sirv_gpio(
   reg [31:0] pueReg_io_q;
   reg [31:0] dsReg;
   reg [31:0] ieReg_io_q;
-  reg [31:0] T_3256;
-  reg [31:0] T_3257;
+  reg [31:0] sync_pads_d0;
+  reg [31:0] sync_pads_d1;
   reg [31:0] inSyncReg;
   reg [31:0] valueReg;
   reg [31:0] highIeReg;
@@ -89,46 +89,41 @@ module sirv_gpio(
   reg [31:0] iofEnReg_io_q;
   reg [31:0] iofSelReg;
   reg [31:0] xorReg;
-  wire [31:0] T_3269;
-  wire  T_3312;
-  wire [9:0] T_3316;
-  wire  T_3457;
-  wire  T_3858;
-  wire [4:0] T_5301;
-  wire  T_5318;
-  wire  T_5321;
-  wire  T_5323;
-  wire [31:0] T_5359;
-  wire  T_5411;
+  wire  op_rd;
+//  wire  T_3457;
+  wire  mask_valid;
+  wire [4:0] addr_bits;
+//  wire [31:0] T_5359;
+  wire  wr_en;
   always @(posedge clock or posedge reset) begin
     if (reset) begin
       oeReg_io_q <= 32'd0;
-    end else if (T_5411 & T_5359[2] & T_3858) begin
-      oeReg_io_q <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h02) & mask_valid) begin
+      oeReg_io_q <= tl_a_bits_data;
     end
   end
 
   always @(posedge clock or posedge reset) begin
     if (reset) begin
       pueReg_io_q <= 32'd0;
-    end else if (T_5411 & T_5359[4] & T_3858) begin
-      pueReg_io_q <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h04) & mask_valid) begin
+      pueReg_io_q <= tl_a_bits_data;
     end
   end
 
   always @(posedge clock or posedge reset) begin
     if (reset) begin
       ieReg_io_q <= 32'd0;
-    end else if (T_5411 & T_5359[1] & T_3858) begin
-      ieReg_io_q <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h01) & mask_valid) begin
+      ieReg_io_q <= tl_a_bits_data;
     end
   end
 
   always @(posedge clock or posedge reset) begin
     if (reset) begin
       iofEnReg_io_q <= 32'd0;
-    end else if (T_5411 & T_5359[14] & T_3858) begin
-      iofEnReg_io_q <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits == 5'h0e) & mask_valid) begin
+      iofEnReg_io_q <= tl_a_bits_data;
     end
   end
 
@@ -137,16 +132,17 @@ module sirv_gpio(
     assign gpio_irq[i] = ((riseIpReg[i] & riseIeReg[i]) | (fallIpReg[i] & fallIeReg[i]) | (highIpReg[i] & highIeReg[i]) | (lowIpReg[i] & lowIeReg[i]));
   end
 
-  assign io_in_0_a_ready = ((io_in_0_d_ready & T_5321) & T_5318);
-  assign io_in_0_d_valid = (T_5323 & T_5321);
-  assign io_in_0_d_bits_opcode = {2'd0, T_3312};
-  assign io_in_0_d_bits_param = 2'h0;
-  assign io_in_0_d_bits_size = T_3316[2:0];
-  assign io_in_0_d_bits_source = T_3316[7:3];
-  assign io_in_0_d_bits_sink = 1'h0;
-  assign io_in_0_d_bits_addr_lo = T_3316[9:8];
-  assign io_in_0_d_bits_data = (T_3457 ? (5'h10 == T_5301 ? xorReg : (5'hf == T_5301 ? iofSelReg : (5'he == T_5301 ? iofEnReg_io_q : (5'hd == T_5301 ? lowIpReg : (5'hc == T_5301 ? lowIeReg : (5'hb == T_5301 ? highIpReg : (5'ha == T_5301 ? highIeReg : (5'h9 == T_5301 ? fallIpReg : (5'h8 == T_5301 ? fallIeReg : (5'h7 == T_5301 ? riseIpReg : (5'h6 == T_5301 ? riseIeReg : (5'h5 == T_5301 ? dsReg : (5'h4 == T_5301 ? pueReg_io_q : (5'h3 == T_5301 ? portReg : (5'h2 == T_5301 ? oeReg_io_q : (5'h1 == T_5301 ? ieReg_io_q : (5'h0 == T_5301 ? valueReg : 32'h0))))))))))))))))) : 32'h0);
-  assign io_in_0_d_bits_error = 1'h0;
+  assign tl_a_ready = tl_d_ready;
+  assign tl_d_valid = tl_a_valid;
+  assign tl_d_bits_opcode = {2'd0, op_rd};
+  assign tl_d_bits_param = 2'h0;
+  assign tl_d_bits_size = tl_a_bits_size;
+  assign tl_d_bits_source = tl_a_bits_source;
+  assign tl_d_bits_sink = 1'h0;
+  assign tl_d_bits_addr_lo = tl_a_bits_address[1:0];
+//  assign T_3457 = tl_a_bits_address[11:7] == 5'h0;
+//  assign tl_d_bits_data = (T_3457 ? (5'h10 == addr_bits ? xorReg : (5'hf == addr_bits ? iofSelReg : (5'he == addr_bits ? iofEnReg_io_q : (5'hd == addr_bits ? lowIpReg : (5'hc == addr_bits ? lowIeReg : (5'hb == addr_bits ? highIpReg : (5'ha == addr_bits ? highIeReg : (5'h9 == addr_bits ? fallIpReg : (5'h8 == addr_bits ? fallIeReg : (5'h7 == addr_bits ? riseIpReg : (5'h6 == addr_bits ? riseIeReg : (5'h5 == addr_bits ? dsReg : (5'h4 == addr_bits ? pueReg_io_q : (5'h3 == addr_bits ? portReg : (5'h2 == addr_bits ? oeReg_io_q : (5'h1 == addr_bits ? ieReg_io_q : (5'h0 == addr_bits ? valueReg : 32'h0))))))))))))))))) : 32'h0);
+  assign tl_d_bits_error = 1'h0;
 
   for (i=0; i<32; i=i+1) begin
     assign io_pads_o_oval[i] = ((iofEnReg_io_q[i] ? (iofSelReg[i] ? (iof_1_o_valid[i] ? iof_1_o_oval[i] : portReg[i]) : (iof_0_o_valid[i] ? iof_0_o_oval[i] : portReg[i])) : portReg[i]) ^ xorReg[i]);
@@ -159,42 +155,63 @@ module sirv_gpio(
 
   assign iof_0_i_ival = inSyncReg;
   assign iof_1_i_ival = inSyncReg;
-  assign T_3269 = ~ valueReg;
-  assign T_3312 = io_in_0_a_bits_opcode == 3'h4;
-  assign T_3316 = {io_in_0_a_bits_address[1:0],io_in_0_a_bits_source,io_in_0_a_bits_size};
-  assign T_3457 = io_in_0_a_bits_address[11:7] == 5'h0;
-  assign T_3858 = { {8{io_in_0_a_bits_mask[3]}}, {8{io_in_0_a_bits_mask[2]}}, {8{io_in_0_a_bits_mask[1]}}, {8{io_in_0_a_bits_mask[0]}} } == 32'hffffffff;
-  assign T_5301 = io_in_0_a_bits_address[6:2];
-  assign T_5318 = 1'b1;
-  assign T_5321 = 1'b1;
-  assign T_5323 = io_in_0_a_valid & T_5318;
-  assign T_5359 = (32'h1 << T_5301);
-  assign T_5411 = T_5323 & io_in_0_d_ready & ~T_3312;
+  assign op_rd = tl_a_bits_opcode == 3'h4;
+  assign mask_valid = &tl_a_bits_mask;
+  assign addr_bits = tl_a_bits_address[6:2];
+//  assign T_5359 = (32'h1 << addr_bits);
+  assign wr_en = tl_a_valid & tl_d_ready & ~op_rd;
+
+  always @(*)
+    if (tl_a_bits_address[11:7] == 5'h0) begin
+      case (addr_bits)
+        5'h10:   tl_d_bits_data = xorReg;
+        5'h0f:   tl_d_bits_data = iofSelReg;
+        5'h0e:   tl_d_bits_data = iofEnReg_io_q;
+        5'h0d:   tl_d_bits_data = lowIpReg;
+        5'h0c:   tl_d_bits_data = lowIeReg;
+        5'h0b:   tl_d_bits_data = highIpReg;
+        5'h0a:   tl_d_bits_data = highIeReg;
+        5'h09:   tl_d_bits_data = fallIpReg;
+        5'h08:   tl_d_bits_data = fallIeReg;
+        5'h07:   tl_d_bits_data = riseIpReg;
+        5'h06:   tl_d_bits_data = riseIeReg;
+        5'h05:   tl_d_bits_data = dsReg;
+        5'h04:   tl_d_bits_data = pueReg_io_q;
+        5'h03:   tl_d_bits_data = portReg;
+        5'h02:   tl_d_bits_data = oeReg_io_q;
+        5'h01:   tl_d_bits_data = ieReg_io_q;
+        5'h00:   tl_d_bits_data = valueReg;
+        default: tl_d_bits_data = 32'h0;
+      endcase
+    end
+    else begin
+      tl_d_bits_data = 32'h0;
+    end
 
   always @(posedge clock or posedge reset)
     if(reset) begin
-      T_3256 <= 32'b0;
-      T_3257 <= 32'b0;
+      sync_pads_d0 <= 32'b0;
+      sync_pads_d1 <= 32'b0;
       inSyncReg <= 32'b0;
     end
     else begin
-      T_3256 <= io_pads_i_ival;
-      T_3257 <= T_3256;
-      inSyncReg <= T_3257;
+      sync_pads_d0 <= io_pads_i_ival;
+      sync_pads_d1 <= sync_pads_d0;
+      inSyncReg <= sync_pads_d1;
     end
 
   always @(posedge clock or posedge reset) 
     if (reset) begin
       portReg <= 32'h0;
-    end else if (T_5411 & T_5359[3] & T_3858) begin
-      portReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h03) & mask_valid) begin
+      portReg <= tl_a_bits_data;
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       dsReg <= 32'h0;
-    end else if (T_5411 & T_5359[5] & T_3858) begin
-      dsReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h05) & mask_valid) begin
+      dsReg <= tl_a_bits_data;
     end
 
 
@@ -208,71 +225,71 @@ module sirv_gpio(
   always @(posedge clock or posedge reset)
     if (reset) begin
       highIeReg <= 32'h0;
-    end else if (T_5411 & T_5359[10] & T_3858) begin
-      highIeReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h0a) & mask_valid) begin
+      highIeReg <= tl_a_bits_data;
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       lowIeReg <= 32'h0;
-    end else if (T_5411 & T_5359[12] & T_3858) begin
-      lowIeReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h0c) & mask_valid) begin
+      lowIeReg <= tl_a_bits_data;
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       riseIeReg <= 32'h0;
-    end else if (T_5411 & T_5359[6] & T_3858) begin
-      riseIeReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h06) & mask_valid) begin
+      riseIeReg <= tl_a_bits_data;
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       fallIeReg <= 32'h0;
-    end else if (T_5411 & T_5359[8] & T_3858) begin
-      fallIeReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits==5'h08) & mask_valid) begin
+      fallIeReg <= tl_a_bits_data;
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       highIpReg <= 32'h0;
     end else begin
-      highIpReg <= ((~ ((~ highIpReg) | (((T_5411 & T_5359[11]) & T_3858) ? io_in_0_a_bits_data : 32'h0))) | valueReg);
+      highIpReg <= ((~ (~highIpReg | ((wr_en & (addr_bits==5'h0b) & mask_valid) ? tl_a_bits_data : 32'h0))) | valueReg);
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       lowIpReg <= 32'h0;
     end else begin
-      lowIpReg <= ((~ ((~ lowIpReg) | (((T_5411 & T_5359[13]) & T_3858) ? io_in_0_a_bits_data : 32'h0))) | T_3269);
+      lowIpReg <= ((~ (~lowIpReg | ((wr_en & (addr_bits==5'h0d) & mask_valid) ? tl_a_bits_data : 32'h0))) | ~valueReg);
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       riseIpReg <= 32'h0;
     end else begin
-      riseIpReg <= ((~ ((~ riseIpReg) | (((T_5411 & T_5359[7]) & T_3858) ? io_in_0_a_bits_data : 32'h0))) | (T_3269 & inSyncReg));
+      riseIpReg <= ((~ (~riseIpReg | ((wr_en & (addr_bits==5'h07) & mask_valid) ? tl_a_bits_data : 32'h0))) | (~valueReg & inSyncReg));
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       fallIpReg <= 32'h0;
     end else begin
-      fallIpReg <= ((~ ((~ fallIpReg) | (((T_5411 & T_5359[9]) & T_3858) ? io_in_0_a_bits_data : 32'h0))) | (valueReg & (~ inSyncReg)));
+      fallIpReg <= ((~ (~fallIpReg | ((wr_en & (addr_bits==5'h09) & mask_valid) ? tl_a_bits_data : 32'h0))) | (valueReg & ~inSyncReg));
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       iofSelReg <= 32'h0;
-    end else if (T_5411 & T_5359[15] & T_3858) begin
-      iofSelReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits == 5'h0f) & mask_valid) begin
+      iofSelReg <= tl_a_bits_data;
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       xorReg <= 32'h0;
-    end else if (T_5411 & T_5359[16] & T_3858) begin
-      xorReg <= io_in_0_a_bits_data;
+    end else if (wr_en & (addr_bits == 5'h10) & mask_valid) begin
+      xorReg <= tl_a_bits_data;
     end
 
 endmodule
