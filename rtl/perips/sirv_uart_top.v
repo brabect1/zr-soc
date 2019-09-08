@@ -78,33 +78,6 @@ module sirv_uart_top(
   assign  i_icb_rsp_valid = io_in_0_d_valid;
   assign  i_icb_rsp_rdata = io_in_0_d_bits_data;
 
-  // Not used
-  wire  io_in_0_b_ready = 1'b0;
-  wire  io_in_0_b_valid;
-  wire  [2:0] io_in_0_b_bits_opcode;
-  wire  [1:0] io_in_0_b_bits_param;
-  wire  [2:0] io_in_0_b_bits_size;
-  wire  [4:0] io_in_0_b_bits_source;
-  wire  [28:0] io_in_0_b_bits_address;
-  wire  [3:0] io_in_0_b_bits_mask;
-  wire  [31:0] io_in_0_b_bits_data;
-
-  // Not used
-  wire  io_in_0_c_ready;
-  wire  io_in_0_c_valid = 1'b0;
-  wire  [2:0] io_in_0_c_bits_opcode = 3'b0;
-  wire  [2:0] io_in_0_c_bits_param = 3'b0;
-  wire  [2:0] io_in_0_c_bits_size = 3'd2;
-  wire  [4:0] io_in_0_c_bits_source = 5'b0;
-  wire  [28:0] io_in_0_c_bits_address = 29'b0;
-  wire  [31:0] io_in_0_c_bits_data = 32'b0;
-  wire  io_in_0_c_bits_error = 1'b0;
-
-  // Not used
-  wire  io_in_0_e_ready;
-  wire  io_in_0_e_valid = 1'b0;
-  wire  io_in_0_e_bits_sink = 1'b0;
-
 sirv_uart u_sirv_uart(
   .clock                            (clk                              ),
   .reset                            (~rst_n                            ),
@@ -119,24 +92,6 @@ sirv_uart u_sirv_uart(
   .io_in_0_a_bits_address           (io_in_0_a_bits_address           ),
   .io_in_0_a_bits_mask              (io_in_0_a_bits_mask              ),
   .io_in_0_a_bits_data              (io_in_0_a_bits_data              ),
-  .io_in_0_b_ready                  (io_in_0_b_ready                  ),
-  .io_in_0_b_valid                  (io_in_0_b_valid                  ),
-  .io_in_0_b_bits_opcode            (io_in_0_b_bits_opcode            ),
-  .io_in_0_b_bits_param             (io_in_0_b_bits_param             ),
-  .io_in_0_b_bits_size              (io_in_0_b_bits_size              ),
-  .io_in_0_b_bits_source            (io_in_0_b_bits_source            ),
-  .io_in_0_b_bits_address           (io_in_0_b_bits_address           ),
-  .io_in_0_b_bits_mask              (io_in_0_b_bits_mask              ),
-  .io_in_0_b_bits_data              (io_in_0_b_bits_data              ),
-  .io_in_0_c_ready                  (io_in_0_c_ready                  ),
-  .io_in_0_c_valid                  (io_in_0_c_valid                  ),
-  .io_in_0_c_bits_opcode            (io_in_0_c_bits_opcode            ),
-  .io_in_0_c_bits_param             (io_in_0_c_bits_param             ),
-  .io_in_0_c_bits_size              (io_in_0_c_bits_size              ),
-  .io_in_0_c_bits_source            (io_in_0_c_bits_source            ),
-  .io_in_0_c_bits_address           (io_in_0_c_bits_address           ),
-  .io_in_0_c_bits_data              (io_in_0_c_bits_data              ),
-  .io_in_0_c_bits_error             (io_in_0_c_bits_error             ),
   .io_in_0_d_ready                  (io_in_0_d_ready                  ),
   .io_in_0_d_valid                  (io_in_0_d_valid                  ),
   .io_in_0_d_bits_opcode            (io_in_0_d_bits_opcode            ),
@@ -147,9 +102,6 @@ sirv_uart u_sirv_uart(
   .io_in_0_d_bits_addr_lo           (io_in_0_d_bits_addr_lo           ),
   .io_in_0_d_bits_data              (io_in_0_d_bits_data              ),
   .io_in_0_d_bits_error             (io_in_0_d_bits_error             ),
-  .io_in_0_e_ready                  (io_in_0_e_ready                  ),
-  .io_in_0_e_valid                  (io_in_0_e_valid                  ),
-  .io_in_0_e_bits_sink              (io_in_0_e_bits_sink              ),
 
   .io_port_txd                      (io_port_txd                      ),
   .io_port_rxd                      (io_port_rxd                      ) 
