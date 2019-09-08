@@ -1,6 +1,3 @@
-[submodule "ip/riscv_jtag_dm"]
-	path = ip/riscv_jtag_dm
-	url = https://github.com/brabect1/riscv_jtag_dm
 [submodule "ip/riscv-dbg"]
 	path = ip/riscv-dbg
 	url = https://github.com/pulp-platform/riscv-dbg
