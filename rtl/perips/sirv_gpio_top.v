@@ -48,24 +48,24 @@ module sirv_gpio_top(
 
   output [31:0] gpio_irq,
 
-  input  [31:0] io_port_pins_i_ival,
-  output [31:0] io_port_pins_o_oval,
-  output [31:0] io_port_pins_o_oe,
-  output [31:0] io_port_pins_o_ie,
-  output [31:0] io_port_pins_o_pue,
-  output [31:0] io_port_pins_o_ds,
+  input  [31:0] io_pads_i_ival,
+  output [31:0] io_pads_o_oval,
+  output [31:0] io_pads_o_oe,
+  output [31:0] io_pads_o_ie,
+  output [31:0] io_pads_o_pue,
+  output [31:0] io_pads_o_ds,
 
-  output [31:0] io_port_iof_0_i_ival,
-  input  [31:0] io_port_iof_0_o_oval,
-  input  [31:0] io_port_iof_0_o_oe,
-  input  [31:0] io_port_iof_0_o_ie,
-  input  [31:0] io_port_iof_0_o_valid,
+  output [31:0] iof_0_i_ival,
+  input  [31:0] iof_0_o_oval,
+  input  [31:0] iof_0_o_oe,
+  input  [31:0] iof_0_o_ie,
+  input  [31:0] iof_0_o_valid,
 
-  output [31:0] io_port_iof_1_i_ival,
-  input  [31:0] io_port_iof_1_o_oval,
-  input  [31:0] io_port_iof_1_o_oe,
-  input  [31:0] io_port_iof_1_o_ie,
-  input  [31:0] io_port_iof_1_o_valid
+  output [31:0] iof_1_i_ival,
+  input  [31:0] iof_1_o_oval,
+  input  [31:0] iof_1_o_oe,
+  input  [31:0] iof_1_o_ie,
+  input  [31:0] iof_1_o_valid
 );
 
 
@@ -120,25 +120,25 @@ sirv_gpio u_sirv_gpio(
   .io_in_0_d_bits_data              (io_in_0_d_bits_data              ),
   .io_in_0_d_bits_error             (io_in_0_d_bits_error             ),
 
-  .io_interrupts               (gpio_irq),
+  .gpio_irq               (gpio_irq),
  
-  .io_port_pins_i_ival           (io_port_pins_i_ival),
-  .io_port_pins_o_oval           (io_port_pins_o_oval),
-  .io_port_pins_o_oe             (io_port_pins_o_oe),
-  .io_port_pins_o_ie             (io_port_pins_o_ie),
-  .io_port_pins_o_pue            (io_port_pins_o_pue),
-  .io_port_pins_o_ds             (io_port_pins_o_ds),
+  .io_pads_i_ival           (io_pads_i_ival),
+  .io_pads_o_oval           (io_pads_o_oval),
+  .io_pads_o_oe             (io_pads_o_oe),
+  .io_pads_o_ie             (io_pads_o_ie),
+  .io_pads_o_pue            (io_pads_o_pue),
+  .io_pads_o_ds             (io_pads_o_ds),
 
-  .io_port_iof_0_i_ival          (io_port_iof_0_i_ival),
-  .io_port_iof_0_o_oval          (io_port_iof_0_o_oval),
-  .io_port_iof_0_o_oe            (io_port_iof_0_o_oe),
-  .io_port_iof_0_o_ie            (io_port_iof_0_o_ie),
-  .io_port_iof_0_o_valid         (io_port_iof_0_o_valid),
-  .io_port_iof_1_i_ival          (io_port_iof_1_i_ival),
-  .io_port_iof_1_o_oval          (io_port_iof_1_o_oval),
-  .io_port_iof_1_o_oe            (io_port_iof_1_o_oe),
-  .io_port_iof_1_o_ie            (io_port_iof_1_o_ie),
-  .io_port_iof_1_o_valid         (io_port_iof_1_o_valid)
+  .iof_0_i_ival          (iof_0_i_ival),
+  .iof_0_o_oval          (iof_0_o_oval),
+  .iof_0_o_oe            (iof_0_o_oe),
+  .iof_0_o_ie            (iof_0_o_ie),
+  .iof_0_o_valid         (iof_0_o_valid),
+  .iof_1_i_ival          (iof_1_i_ival),
+  .iof_1_o_oval          (iof_1_o_oval),
+  .iof_1_o_oe            (iof_1_o_oe),
+  .iof_1_o_ie            (iof_1_o_ie),
+  .iof_1_o_valid         (iof_1_o_valid)
 );
 
 endmodule

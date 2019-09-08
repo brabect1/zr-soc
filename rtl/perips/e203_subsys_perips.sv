@@ -739,22 +739,22 @@ sirv_gpio_top u_sirv_gpio_top(
 
     .gpio_irq                 (gpio_irq),
    
-    .io_port_pins_i_ival           (io_pads_gpio_i_ival),
-    .io_port_pins_o_oval           (io_pads_gpio_o_oval),
-    .io_port_pins_o_oe             (io_pads_gpio_o_oe  ),
-    .io_port_pins_o_ie             (io_pads_gpio_o_ie  ),
-    .io_port_pins_o_pue            (io_pads_gpio_o_pue ),
-    .io_port_pins_o_ds             (io_pads_gpio_o_ds  ),
-    .io_port_iof_0_i_ival          (gpio_iof_0_i_ival ),
-    .io_port_iof_0_o_oval          (gpio_iof_0_o_oval ),
-    .io_port_iof_0_o_oe            (gpio_iof_0_o_oe   ),
-    .io_port_iof_0_o_ie            (gpio_iof_0_o_ie   ),
-    .io_port_iof_0_o_valid         (gpio_iof_0_o_valid),
-    .io_port_iof_1_i_ival          (gpio_iof_1_i_ival ),
-    .io_port_iof_1_o_oval          (gpio_iof_1_o_oval ),
-    .io_port_iof_1_o_oe            (gpio_iof_1_o_oe   ),
-    .io_port_iof_1_o_ie            (gpio_iof_1_o_ie   ),
-    .io_port_iof_1_o_valid         (gpio_iof_1_o_valid)
+    .io_pads_i_ival           (io_pads_gpio_i_ival),
+    .io_pads_o_oval           (io_pads_gpio_o_oval),
+    .io_pads_o_oe             (io_pads_gpio_o_oe  ),
+    .io_pads_o_ie             (io_pads_gpio_o_ie  ),
+    .io_pads_o_pue            (io_pads_gpio_o_pue ),
+    .io_pads_o_ds             (io_pads_gpio_o_ds  ),
+    .iof_0_i_ival          (gpio_iof_0_i_ival ),
+    .iof_0_o_oval          (gpio_iof_0_o_oval ),
+    .iof_0_o_oe            (gpio_iof_0_o_oe   ),
+    .iof_0_o_ie            (gpio_iof_0_o_ie   ),
+    .iof_0_o_valid         (gpio_iof_0_o_valid),
+    .iof_1_i_ival          (gpio_iof_1_i_ival ),
+    .iof_1_o_oval          (gpio_iof_1_o_oval ),
+    .iof_1_o_oe            (gpio_iof_1_o_oe   ),
+    .iof_1_o_ie            (gpio_iof_1_o_ie   ),
+    .iof_1_o_valid         (gpio_iof_1_o_valid)
 );
 
   //  * UART0     

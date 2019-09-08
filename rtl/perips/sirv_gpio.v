@@ -29,7 +29,7 @@
 module sirv_gpio(
   input   clock,
   input   reset,
-  output  [31:0] io_interrupts,
+  output  [31:0] gpio_irq,
   output  io_in_0_a_ready,
   input   io_in_0_a_valid,
   input  [2:0] io_in_0_a_bits_opcode,
@@ -50,23 +50,23 @@ module sirv_gpio(
   output [31:0] io_in_0_d_bits_data,
   output  io_in_0_d_bits_error,
 
-  input   [31:0] io_port_pins_i_ival,
-  output  [31:0] io_port_pins_o_oval,
-  output  [31:0] io_port_pins_o_oe,
-  output  [31:0] io_port_pins_o_ie,
-  output  [31:0] io_port_pins_o_pue,
-  output  [31:0] io_port_pins_o_ds,
+  input   [31:0] io_pads_i_ival,
+  output  [31:0] io_pads_o_oval,
+  output  [31:0] io_pads_o_oe,
+  output  [31:0] io_pads_o_ie,
+  output  [31:0] io_pads_o_pue,
+  output  [31:0] io_pads_o_ds,
 
-  output  [31:0] io_port_iof_0_i_ival,
-  input   [31:0] io_port_iof_0_o_oval,
-  input   [31:0] io_port_iof_0_o_oe,
-  input   [31:0] io_port_iof_0_o_ie,
-  input   [31:0] io_port_iof_0_o_valid,
-  output  [31:0] io_port_iof_1_i_ival,
-  input   [31:0] io_port_iof_1_o_oval,
-  input   [31:0] io_port_iof_1_o_oe,
-  input   [31:0] io_port_iof_1_o_ie,
-  input   [31:0] io_port_iof_1_o_valid
+  output  [31:0] iof_0_i_ival,
+  input   [31:0] iof_0_o_oval,
+  input   [31:0] iof_0_o_oe,
+  input   [31:0] iof_0_o_ie,
+  input   [31:0] iof_0_o_valid,
+  output  [31:0] iof_1_i_ival,
+  input   [31:0] iof_1_o_oval,
+  input   [31:0] iof_1_o_oe,
+  input   [31:0] iof_1_o_ie,
+  input   [31:0] iof_1_o_valid
 
 );
   reg [31:0] portReg;
@@ -134,7 +134,7 @@ module sirv_gpio(
 
   genvar i;
   for (i=0; i<32; i=i+1) begin
-    assign io_interrupts[i] = ((riseIpReg[i] & riseIeReg[i]) | (fallIpReg[i] & fallIeReg[i]) | (highIpReg[i] & highIeReg[i]) | (lowIpReg[i] & lowIeReg[i]));
+    assign gpio_irq[i] = ((riseIpReg[i] & riseIeReg[i]) | (fallIpReg[i] & fallIeReg[i]) | (highIpReg[i] & highIeReg[i]) | (lowIpReg[i] & lowIeReg[i]));
   end
 
   assign io_in_0_a_ready = ((io_in_0_d_ready & T_5321) & T_5318);
@@ -149,16 +149,16 @@ module sirv_gpio(
   assign io_in_0_d_bits_error = 1'h0;
 
   for (i=0; i<32; i=i+1) begin
-    assign io_port_pins_o_oval[i] = ((iofEnReg_io_q[i] ? (iofSelReg[i] ? (io_port_iof_1_o_valid[i] ? io_port_iof_1_o_oval[i] : portReg[i]) : (io_port_iof_0_o_valid[i] ? io_port_iof_0_o_oval[i] : portReg[i])) : portReg[i]) ^ xorReg[i]);
-    assign io_port_pins_o_oe[i] = (iofEnReg_io_q[i] ? (iofSelReg[i] ? (io_port_iof_1_o_valid[i] ? io_port_iof_1_o_oe[i] : oeReg_io_q[i]) : (io_port_iof_0_o_valid[i] ? io_port_iof_0_o_oe[i] : oeReg_io_q[i])) : oeReg_io_q[i]);
-    assign io_port_pins_o_ie[i] = (iofEnReg_io_q[i] ? (iofSelReg[i] ? (io_port_iof_1_o_valid[i] ? io_port_iof_1_o_ie[i] : ieReg_io_q[i]) : (io_port_iof_0_o_valid[i] ? io_port_iof_0_o_ie[i] : ieReg_io_q[i])) : ieReg_io_q[i]);
+    assign io_pads_o_oval[i] = ((iofEnReg_io_q[i] ? (iofSelReg[i] ? (iof_1_o_valid[i] ? iof_1_o_oval[i] : portReg[i]) : (iof_0_o_valid[i] ? iof_0_o_oval[i] : portReg[i])) : portReg[i]) ^ xorReg[i]);
+    assign io_pads_o_oe[i] = (iofEnReg_io_q[i] ? (iofSelReg[i] ? (iof_1_o_valid[i] ? iof_1_o_oe[i] : oeReg_io_q[i]) : (iof_0_o_valid[i] ? iof_0_o_oe[i] : oeReg_io_q[i])) : oeReg_io_q[i]);
+    assign io_pads_o_ie[i] = (iofEnReg_io_q[i] ? (iofSelReg[i] ? (iof_1_o_valid[i] ? iof_1_o_ie[i] : ieReg_io_q[i]) : (iof_0_o_valid[i] ? iof_0_o_ie[i] : ieReg_io_q[i])) : ieReg_io_q[i]);
   end
 
-  assign io_port_pins_o_pue = pueReg_io_q;
-  assign io_port_pins_o_ds =  dsReg;
+  assign io_pads_o_pue = pueReg_io_q;
+  assign io_pads_o_ds =  dsReg;
 
-  assign io_port_iof_0_i_ival = inSyncReg;
-  assign io_port_iof_1_i_ival = inSyncReg;
+  assign iof_0_i_ival = inSyncReg;
+  assign iof_1_i_ival = inSyncReg;
   assign T_3269 = ~ valueReg;
   assign T_3312 = io_in_0_a_bits_opcode == 3'h4;
   assign T_3316 = {io_in_0_a_bits_address[1:0],io_in_0_a_bits_source,io_in_0_a_bits_size};
@@ -178,7 +178,7 @@ module sirv_gpio(
       inSyncReg <= 32'b0;
     end
     else begin
-      T_3256 <= io_port_pins_i_ival;
+      T_3256 <= io_pads_i_ival;
       T_3257 <= T_3256;
       inSyncReg <= T_3257;
     end
