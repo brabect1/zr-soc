@@ -75,7 +75,6 @@ module sirv_qspi_media(
   wire  phy_io_port_dq_2_oe;
   wire  phy_io_port_dq_3_o;
   wire  phy_io_port_dq_3_oe;
-//  wire  phy_io_port_cs_0;
   wire  io_op_ready;
   wire  io_rx_valid;
   wire [7:0] io_rx_bits;
@@ -89,14 +88,9 @@ module sirv_qspi_media(
   wire  continuous;
   reg [1:0] state;
   wire  s_main;
-//  wire [1:0] GEN_2;
-//  wire  T_184;
-//  wire  T_186;
-//  wire  T_188;
   wire  T_189; // tx start = T_189 & io_op_ready
   wire  T_195; // tx idle
   wire  s_interxfr;
-//  wire  T_201;
   wire  io_op_valid;
   wire  s_intercs;
   sirv_qspi_physical phy (
@@ -162,14 +156,9 @@ module sirv_qspi_media(
   assign cs_deassert = clear | ((T_163 != cs_dflt_0) & ~io_link_cs_hold);
   assign continuous = io_ctrl_dla_interxfr == 8'h0; // TBD: This should get locked at the start of transfer.
   assign s_main = (2'h0 == state);
-//  assign GEN_2 = cs_deassert ? (io_op_ready ? 2'h2 : state) : state;
-//  assign T_184 = ~cs_deassert;
-//  assign T_186 = io_op_ready & io_op_valid;
-//  assign T_188 = cs_assert == 1'h0;
   assign T_189 = ~cs_assert &  io_link_tx_valid;
   assign T_195 = ~cs_assert & ~io_link_tx_valid;
   assign s_interxfr = 2'h1 == state;
-//  assign T_201 = io_op_ready | continuous;
   assign io_op_valid = (s_interxfr & ~continuous) | (s_main & cs_assert & ~cs_deassert & io_link_tx_valid);
   assign s_intercs = 2'h2 == state;
 
@@ -233,70 +222,10 @@ module sirv_qspi_media(
       if (s_intercs) begin
         if (io_op_ready) begin
           state <= 2'h0; // to s_main
-//        end else begin
-//          if (s_interxfr) begin
-//            if (T_201) begin
-//              state <= 2'h0;
-//            end else begin
-//              if (s_main) begin
-//                if (cs_assert) begin
-//                  if (T_184) begin
-//                    if (T_186) begin
-//                      state <= 2'h1;
-//                    end else begin
-//                      if (cs_deassert) begin
-//                        if (io_op_ready) begin
-//                          state <= 2'h2;
-//                        end
-//                      end
-//                    end
-//                  end else begin
-//                    if (cs_deassert) begin
-//                      if (io_op_ready) begin
-//                        state <= 2'h2;
-//                      end
-//                    end
-//                  end
-//                end
-//              end
-//            end
-//          end else begin
-//            if (s_main) begin
-//              if (cs_assert) begin
-//                if (T_184) begin
-//                  if (T_186) begin
-//                    state <= 2'h1;
-//                  end else begin
-//                    if (cs_deassert) begin
-//                      if (io_op_ready) begin
-//                        state <= 2'h2;
-//                      end
-//                    end
-//                  end
-//                end else begin
-//                  if (cs_deassert) begin
-//                    if (io_op_ready) begin
-//                      state <= 2'h2;
-//                    end
-//                  end
-//                end
-//              end
-//            end
-//          end
         end
       end else if (s_interxfr) begin
         if (io_op_ready | continuous) begin
           state <= 2'h0; // to s_main
-//        end else begin
-//          if (s_main) begin
-//            if (cs_assert) begin
-//              if (T_184 & T_186) begin
-//                state <= 2'h1;
-//              end else begin
-//                state <= GEN_2;
-//              end
-//            end
-//          end
         end
       end else if (s_main) begin
           if (cs_assert) begin

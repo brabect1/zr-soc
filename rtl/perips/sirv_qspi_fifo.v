@@ -20,9 +20,9 @@
    - Code cleanup (unused nets, transitive assignments, constant assignments).
 
  */                                                                      
-                                                                         
-                                                                         
-                                                                         
+
+
+
 
 module sirv_qspi_fifo(
   input   clock,

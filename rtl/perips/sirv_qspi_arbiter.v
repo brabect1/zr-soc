@@ -72,9 +72,6 @@ module sirv_qspi_arbiter(
 );
   reg  sel_0;
   reg  sel_1;
-//  wire [3:0] T_379;
-//  wire [2:0] T_406;
-//  wire  T_431;
   wire  sel_set;
   assign io_inner_0_tx_ready = (io_outer_tx_ready & sel_0);
   assign io_inner_0_rx_valid = (io_outer_rx_valid & sel_0);
@@ -91,29 +88,11 @@ module sirv_qspi_arbiter(
   assign io_outer_fmt_endian = (sel_0 & io_inner_0_fmt_endian) | (sel_1 & io_inner_1_fmt_endian);
   assign io_outer_fmt_iodir = (sel_0 & io_inner_0_fmt_iodir) | (sel_1 & io_inner_1_fmt_iodir);
   assign io_outer_cs_set = (sel_0 & io_inner_0_cs_set) | (sel_1 & io_inner_1_cs_set);
-//  assign io_outer_cs_clear = (sel_set ? (({sel_1,sel_0} != {io_sel,T_431}) ? 1'h1 : T_406[1]) : T_406[1]);
   assign io_outer_cs_clear = 
       (sel_set & ({sel_1,sel_0} != {io_sel,~io_sel})) |
       (sel_0 & io_inner_0_cs_clear) | (sel_1 & io_inner_1_cs_clear);
   assign io_outer_cs_hold = (sel_0 & io_inner_0_cs_hold) | (sel_1 & io_inner_1_cs_hold);
-//  assign T_379 =
-//      (sel_0 ? {io_inner_0_fmt_proto,io_inner_0_fmt_endian,io_inner_0_fmt_iodir} : 4'h0) |
-//      (sel_1 ? {io_inner_1_fmt_proto,io_inner_1_fmt_endian,io_inner_1_fmt_iodir} : 4'h0);
-//  assign T_406 = 
-//      (sel_0 ? {io_inner_0_cs_set,io_inner_0_cs_clear,io_inner_0_cs_hold} : 3'h0) |
-//      (sel_1 ? {io_inner_1_cs_set,io_inner_1_cs_clear,io_inner_1_cs_hold} : 3'h0);
-//  assign T_431 = io_sel == 1'h0;
   assign sel_set = ~((sel_0 & io_inner_0_lock) | (sel_1 & io_inner_1_lock));
-
-//  always @(posedge clock or posedge reset)
-//    if (reset) begin
-//      sel_0 <= 1'h1;
-//    end else begin
-//      if (sel_set) begin
-////        sel_0 <= T_431;
-//        sel_0 <= ~io_sel;
-//      end
-//    end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
