@@ -29,31 +29,30 @@
 module sirv_uart(
   input   clock,
   input   reset,
-  output  io_interrupts_0_0,
-  output  io_in_0_a_ready,
-  input   io_in_0_a_valid,
-  input  [2:0] io_in_0_a_bits_opcode,
-  input  [2:0] io_in_0_a_bits_param,
-  input  [2:0] io_in_0_a_bits_size,
-  input  [4:0] io_in_0_a_bits_source,
-  input  [28:0] io_in_0_a_bits_address,
-  input  [3:0] io_in_0_a_bits_mask,
-  input  [31:0] io_in_0_a_bits_data,
-  input   io_in_0_d_ready,
-  output  io_in_0_d_valid,
-  output [2:0] io_in_0_d_bits_opcode,
-  output [1:0] io_in_0_d_bits_param,
-  output [2:0] io_in_0_d_bits_size,
-  output [4:0] io_in_0_d_bits_source,
-  output  io_in_0_d_bits_sink,
-  output [1:0] io_in_0_d_bits_addr_lo,
-  output [31:0] io_in_0_d_bits_data,
-  output  io_in_0_d_bits_error,
+  output  irq,
+  output  tl_a_ready,
+  input   tl_a_valid,
+  input  [2:0] tl_a_bits_opcode,
+  input  [2:0] tl_a_bits_param,
+  input  [2:0] tl_a_bits_size,
+  input  [4:0] tl_a_bits_source,
+  input  [28:0] tl_a_bits_address,
+  input  [3:0] tl_a_bits_mask,
+  input  [31:0] tl_a_bits_data,
+  input   tl_d_ready,
+  output  tl_d_valid,
+  output [2:0] tl_d_bits_opcode,
+  output [1:0] tl_d_bits_param,
+  output [2:0] tl_d_bits_size,
+  output [4:0] tl_d_bits_source,
+  output  tl_d_bits_sink,
+  output [1:0] tl_d_bits_addr_lo,
+  output [31:0] tl_d_bits_data,
+  output  tl_d_bits_error,
   output  io_port_txd,
   input   io_port_rxd
 );
   wire  txm_io_in_ready;
-  wire  txm_io_out;
   wire  txq_io_enq_ready;
   wire  txq_io_deq_valid;
   wire [7:0] txq_io_deq_bits;
@@ -72,25 +71,14 @@ module sirv_uart(
   reg  nstop;
   reg  ie_rxwm;
   reg  ie_txwm;
-  wire  T_916;
-  wire  T_917;
-  wire  T_968;
-  wire [9:0] T_972;
+  wire  irq_txwm;
+  wire  irq_rxwm;
+  wire  op_rd;
   wire  T_1065;
-  wire [31:0] T_1226;
-  wire  T_1376;
-  wire  T_1416;
-  wire  T_1696;
-  wire [2:0] T_2149;
-  wire  T_2164;
-  wire  T_2167;
-  wire  T_2169;
+  wire [2:0] addr_bits;
   wire [7:0] T_2181;
-  wire  T_2202;
-  wire  T_2209;
-  wire  T_2251;
-  wire  T_2271;
-  wire  T_2291;
+  wire  op_rdy;
+  wire  wr_en;
   sirv_uarttx u_txm (
     .clock(clock),
     .reset(reset),
@@ -98,7 +86,7 @@ module sirv_uart(
     .io_in_ready(txm_io_in_ready),
     .io_in_valid(txq_io_deq_valid),
     .io_in_bits(txq_io_deq_bits),
-    .io_out(txm_io_out),
+    .io_out(io_port_txd),
     .io_div(div),
     .io_nstop(nstop)
   );
@@ -106,8 +94,8 @@ module sirv_uart(
     .clock(clock),
     .reset(reset),
     .io_enq_ready(txq_io_enq_ready),
-    .io_enq_valid(((((T_2209 & T_2181[0]) & 1'h1) & 1'h1) & ((~ T_1226[7:0]) == 8'h0))),
-    .io_enq_bits(io_in_0_a_bits_data[7:0]),
+    .io_enq_valid(wr_en & T_2181[0] & tl_a_bits_mask[0]),
+    .io_enq_bits(tl_a_bits_data[7:0]),
     .io_deq_ready(txm_io_in_ready),
     .io_deq_valid(txq_io_deq_valid),
     .io_deq_bits(txq_io_deq_bits),
@@ -142,97 +130,90 @@ module sirv_uart(
     .io_enq_ready(rxq_io_enq_ready),
     .io_enq_valid(rxm_io_out_valid),
     .io_enq_bits(rxm_io_out_bits),
-    .io_deq_ready((((((T_2202 & T_968) & T_2181[1]) & 1'h1) & 1'h1) & (T_1226[7:0] != 8'h0))),
+    .io_deq_ready(op_rdy & op_rd & T_2181[1] & tl_a_bits_mask[0]),
     .io_deq_valid(rxq_io_deq_valid),
     .io_deq_bits(rxq_io_deq_bits),
     .io_count(rxq_io_count)
   );
-  assign io_interrupts_0_0 = ((T_916 & ie_txwm) | (T_917 & ie_rxwm));
-  assign io_in_0_a_ready = ((io_in_0_d_ready & T_2167) & T_2164);
-  assign io_in_0_d_valid = (T_2169 & T_2167);
-  assign io_in_0_d_bits_opcode = {{2'd0}, T_968};
-  assign io_in_0_d_bits_param = 2'h0;
-  assign io_in_0_d_bits_size = T_972[2:0];
-  assign io_in_0_d_bits_source = T_972[7:3];
-  assign io_in_0_d_bits_sink = 1'h0;
-  assign io_in_0_d_bits_addr_lo = T_972[9:8];
-  assign io_in_0_d_bits_data = T_1065 ? (3'h7 == T_2149 ? 32'h0 : (3'h6 == T_2149 ? ({16'd0, div}) : (3'h5 == T_2149 ? {30'd0,T_917,T_916} : (3'h4 == T_2149 ? {30'd0,ie_rxwm,ie_txwm} : (3'h3 == T_2149 ? {16'd0,rxwm,15'd0,rxen} : (3'h2 == T_2149 ? {12'd0,txwm,14'd0,nstop,txen} : (3'h1 == T_2149 ? {~rxq_io_deq_valid,23'd0,rxq_io_deq_bits} : {~txq_io_enq_ready,31'd0} ))))))) : 32'h0;
-  assign io_in_0_d_bits_error = 1'h0;
-  assign io_port_txd = txm_io_out;
-  assign T_916 = txq_io_count < txwm;
-  assign T_917 = rxq_io_count > rxwm;
-  assign T_968 = io_in_0_a_bits_opcode == 3'h4;
-  assign T_972 = {io_in_0_a_bits_address[1:0],io_in_0_a_bits_source,io_in_0_a_bits_size};
-  assign T_1065 = io_in_0_a_bits_address[11:5] == 10'h0;
-  assign T_1226 = { {8{io_in_0_a_bits_mask[3]}}, {8{io_in_0_a_bits_mask[2]}}, {8{io_in_0_a_bits_mask[1]}}, {8{io_in_0_a_bits_mask[0]}} };
-  assign T_1376 = T_1226[0];
-  assign T_1416 = T_1226[1];
-  assign T_1696 = T_1226[19:16] == 4'hf;
-  assign T_2149 = io_in_0_a_bits_address[4:2];
-  assign T_2164 = 1'b1;
-  assign T_2167 = 1'b1;
-  assign T_2169 = io_in_0_a_valid & T_2164;
-  assign T_2181 = (8'h1 << T_2149);
-  assign T_2202 = T_2169 & io_in_0_d_ready;
-  assign T_2209 = T_2202 & ~T_968;
-  assign T_2251 = T_2209 & T_2181[2];
-  assign T_2271 = T_2209 & T_2181[3];
-  assign T_2291 = T_2209 & T_2181[4];
+  assign irq = ((irq_txwm & ie_txwm) | (irq_rxwm & ie_rxwm));
+  assign tl_a_ready = tl_d_ready;
+  assign tl_d_valid = tl_a_valid;
+  assign tl_d_bits_opcode = {{2'd0}, op_rd};
+  assign tl_d_bits_param = 2'h0;
+  assign tl_d_bits_size = tl_a_bits_size;
+  assign tl_d_bits_source = tl_a_bits_source;
+  assign tl_d_bits_sink = 1'h0;
+  assign tl_d_bits_addr_lo = tl_a_bits_address[1:0];
+//  assign tl_d_bits_data = T_1065 ? (3'h7 == addr_bits ? 32'h0 : (3'h6 == addr_bits ? ({16'd0, div}) : (3'h5 == addr_bits ? {30'd0,irq_rxwm,irq_txwm} : (3'h4 == addr_bits ? {30'd0,ie_rxwm,ie_txwm} : (3'h3 == addr_bits ? {16'd0,rxwm,15'd0,rxen} : (3'h2 == addr_bits ? {12'd0,txwm,14'd0,nstop,txen} : (3'h1 == addr_bits ? {~rxq_io_deq_valid,23'd0,rxq_io_deq_bits} : {~txq_io_enq_ready,31'd0} ))))))) : 32'h0;
+  assign tl_d_bits_error = 1'h0;
+  assign irq_txwm = txq_io_count < txwm;
+  assign irq_rxwm = rxq_io_count > rxwm;
+  assign op_rd = tl_a_bits_opcode == 3'h4;
+  assign T_1065 = tl_a_bits_address[11:5] == 10'h0;
+  assign addr_bits = tl_a_bits_address[4:2];
+  assign T_2181 = (8'h1 << addr_bits);
+  assign op_rdy = tl_a_valid & tl_d_ready;
+  assign wr_en = op_rdy & ~op_rd;
+
+  always @(*)
+    if (T_1065) begin
+      case (addr_bits)
+        3'h0: tl_d_bits_data = {~txq_io_enq_ready,31'd0};
+        3'h1: tl_d_bits_data = {~rxq_io_deq_valid,23'd0,rxq_io_deq_bits};
+        3'h2: tl_d_bits_data = {12'd0,txwm,14'd0,nstop,txen};
+        3'h3: tl_d_bits_data = {16'd0,rxwm,15'd0,rxen};
+        3'h4: tl_d_bits_data = {30'd0,ie_rxwm,ie_txwm};
+        3'h5: tl_d_bits_data = {30'd0,irq_rxwm,irq_txwm};
+        3'h6: tl_d_bits_data = {16'd0, div};
+        default: tl_d_bits_data = 32'h0;
+      endcase
+    end
+    else begin
+      tl_d_bits_data = 32'h0;
+    end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       div <= 16'h21e;
-    end else if (T_2209 & T_2181[6] & ((~T_1226[15:0]) == 16'h0)) begin
-      div <= io_in_0_a_bits_data[15:0];
+    end else if (wr_en & T_2181[6] & (tl_a_bits_mask[1:0] == 2'h3)) begin
+      div <= tl_a_bits_data[15:0];
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       txen <= 1'h0;
-    end else if (T_2251 & T_1376) begin
-      txen <= io_in_0_a_bits_data[0];
+      nstop <= 1'h0;
+      txwm <= 4'h0;
+    end else if (wr_en & T_2181[2]) begin
+      if (tl_a_bits_mask[0]) begin
+        txen <= tl_a_bits_data[0];
+        nstop <= tl_a_bits_data[1];
+      end
+      if (tl_a_bits_mask[2]) begin
+        txwm <= tl_a_bits_data[19:16];
+      end
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       rxen <= 1'h0;
-    end else if (T_2271 & T_1376) begin
-      rxen <= io_in_0_a_bits_data[0];
-    end
-
-  always @(posedge clock or posedge reset)
-    if (reset) begin
-      txwm <= 4'h0;
-    end else if (T_2251 & T_1696) begin
-      txwm <= io_in_0_a_bits_data[19:16];
-    end
-
-  always @(posedge clock or posedge reset)
-    if (reset) begin
       rxwm <= 4'h0;
-    end else if (T_2271 & T_1696) begin
-      rxwm <= io_in_0_a_bits_data[19:16];
-    end
-
-  always @(posedge clock or posedge reset)
-    if (reset) begin
-      nstop <= 1'h0;
-    end else if (T_2251 & T_1416) begin
-      nstop <= io_in_0_a_bits_data[1];
+    end else if (wr_en & T_2181[3]) begin
+      if (tl_a_bits_mask[0]) begin
+        rxen <= tl_a_bits_data[0];
+      end
+      if (tl_a_bits_mask[2]) begin
+        rxwm <= tl_a_bits_data[19:16];
+      end
     end
 
   always @(posedge clock or posedge reset)
     if (reset) begin
       ie_rxwm <= 1'h0;
-    end else if (T_2291 & T_1416) begin
-      ie_rxwm <= io_in_0_a_bits_data[1];
-    end
-
-  always @(posedge clock or posedge reset)
-    if (reset) begin
       ie_txwm <= 1'h0;
-    end else if (T_2291 & T_1376) begin
-      ie_txwm <= io_in_0_a_bits_data[0];
+    end else if (wr_en & T_2181[4] & tl_a_bits_mask[0]) begin
+      ie_rxwm <= tl_a_bits_data[1];
+      ie_txwm <= tl_a_bits_data[0];
     end
 
 endmodule
