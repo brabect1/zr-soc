@@ -27,35 +27,41 @@
 module sirv_qspi_fifo(
   input   clock,
   input   reset,
-  input  [1:0] io_ctrl_fmt_proto,
-  input   io_ctrl_fmt_endian,
-  input   io_ctrl_fmt_iodir,
-  input  [3:0] io_ctrl_fmt_len,
-  input  [1:0] io_ctrl_cs_mode,
-  input  [3:0] io_ctrl_wm_tx,
-  input  [3:0] io_ctrl_wm_rx,
-  input   io_link_tx_ready,
-  output  io_link_tx_valid,
-  output [7:0] io_link_tx_bits,
-  input   io_link_rx_valid,
-  input  [7:0] io_link_rx_bits,
-  output [7:0] io_link_cnt,
-  output [1:0] io_link_fmt_proto,
-  output  io_link_fmt_endian,
-  output  io_link_fmt_iodir,
-  output  io_link_cs_set,
-  output  io_link_cs_clear,
-  output  io_link_cs_hold,
-  input   io_link_active,
-  output  io_link_lock,
+
+  // Control bits
+  input  [1:0] ctrl_fmt_proto,
+//  input   ctrl_fmt_endian,
+  input   ctrl_fmt_iodir,
+  input  [3:0] ctrl_fmt_len,
+  input  [1:0] ctrl_cs_mode,
+  input  [3:0] ctrl_wm_tx,
+  input  [3:0] ctrl_wm_rx,
+
+  // Link layer interface
+  input   link_tx_ready,
+  output  link_tx_valid,
+  output [7:0] link_tx_bits,
+  input   link_rx_valid,
+  input  [7:0] link_rx_bits,
+  output [7:0] link_cnt,
+//  output [1:0] link_fmt_proto,
+//  output  link_fmt_endian,
+//  output  link_fmt_iodir,
+  output  link_cs_set,
+  output  link_cs_clear,
+  output  link_cs_hold,
+//  input   link_active,
+  output  link_lock,
+
+  // Data bus interface 
   output  io_tx_ready,
   input   io_tx_valid,
   input  [7:0] io_tx_bits,
   input   io_rx_ready,
   output  io_rx_valid,
   output [7:0] io_rx_bits,
-  output  io_ip_txwm,
-  output  io_ip_rxwm
+  output  ip_txwm,
+  output  ip_rxwm
 );
   wire  txq_io_enq_ready;
   wire  txq_io_deq_valid;
@@ -75,7 +81,7 @@ module sirv_qspi_fifo(
     .io_enq_ready(txq_io_enq_ready),
     .io_enq_valid(io_tx_valid),
     .io_enq_bits(io_tx_bits),
-    .io_deq_ready(io_link_tx_ready),
+    .io_deq_ready(link_tx_ready),
     .io_deq_valid(txq_io_deq_valid),
     .io_deq_bits(txq_io_deq_bits),
     .io_count(txq_io_count)
@@ -84,37 +90,37 @@ module sirv_qspi_fifo(
     .clock(clock),
     .reset(reset),
     .io_enq_ready(rxq_io_enq_ready),
-    .io_enq_valid((io_link_rx_valid & rxen)),
-    .io_enq_bits(io_link_rx_bits),
+    .io_enq_valid(link_rx_valid & rxen),
+    .io_enq_bits(link_rx_bits),
     .io_deq_ready(io_rx_ready),
     .io_deq_valid(rxq_io_deq_valid),
     .io_deq_bits(rxq_io_deq_bits),
     .io_count(rxq_io_count)
   );
-  assign io_link_tx_valid = txq_io_deq_valid;
-  assign io_link_tx_bits = txq_io_deq_bits;
-  assign io_link_cnt = 
-      (((2'h0 == io_link_fmt_proto) ? io_ctrl_fmt_len : 4'h0) |
-       ((2'h1 == io_link_fmt_proto) ? {1'h0,io_ctrl_fmt_len[3:1]} : 4'h0) |
-       ((2'h2 == io_link_fmt_proto) ? {2'h0,io_ctrl_fmt_len[3:2]} : 4'h0))
+  assign link_tx_valid = txq_io_deq_valid;
+  assign link_tx_bits = txq_io_deq_bits;
+  assign link_cnt = 
+      (((2'h0 == ctrl_fmt_proto) ? ctrl_fmt_len : 4'h0) |
+       ((2'h1 == ctrl_fmt_proto) ? {1'h0,ctrl_fmt_len[3:1]} : 4'h0) |
+       ((2'h2 == ctrl_fmt_proto) ? {2'h0,ctrl_fmt_len[3:2]} : 4'h0))
       +
       // TODO: length correction element??? but this does not seem correct
-      (((2'h0 == io_link_fmt_proto) & io_ctrl_fmt_len[0]) |
-       ((2'h1 == io_link_fmt_proto) & (io_ctrl_fmt_len[1:0] != 2'h0)) | 
-       ((2'h2 == io_link_fmt_proto) & (io_ctrl_fmt_len[2:0] != 3'h0)));
-  assign io_link_fmt_proto = io_ctrl_fmt_proto;
-  assign io_link_fmt_endian = io_ctrl_fmt_endian;
-  assign io_link_fmt_iodir = io_ctrl_fmt_iodir;
-  assign io_link_cs_set = ~cs_mode_off;
-  assign io_link_cs_clear = ((cs_mode != io_ctrl_cs_mode) | (fire_tx & ~((cs_mode == 2'h2) | cs_mode_off)));
-  assign io_link_cs_hold = 1'h0;
-  assign io_link_lock = io_link_tx_valid | rxen;
+      (((2'h0 == ctrl_fmt_proto) & ctrl_fmt_len[0]) |
+       ((2'h1 == ctrl_fmt_proto) & (ctrl_fmt_len[1:0] != 2'h0)) | 
+       ((2'h2 == ctrl_fmt_proto) & (ctrl_fmt_len[2:0] != 3'h0)));
+//  assign link_fmt_proto = ctrl_fmt_proto;
+//  assign link_fmt_endian = ctrl_fmt_endian;
+//  assign link_fmt_iodir = ctrl_fmt_iodir;
+  assign link_cs_set = ~cs_mode_off;
+  assign link_cs_clear = ((cs_mode != ctrl_cs_mode) | (fire_tx & ~((cs_mode == 2'h2) | cs_mode_off)));
+  assign link_cs_hold = 1'h0;
+  assign link_lock = link_tx_valid | rxen;
   assign io_tx_ready = txq_io_enq_ready;
   assign io_rx_valid = rxq_io_deq_valid;
   assign io_rx_bits = rxq_io_deq_bits;
-  assign io_ip_txwm = (txq_io_count < io_ctrl_wm_tx);
-  assign io_ip_rxwm = (rxq_io_count > io_ctrl_wm_rx);
-  assign fire_tx = io_link_tx_ready & io_link_tx_valid;
+  assign ip_txwm = (txq_io_count < ctrl_wm_tx);
+  assign ip_rxwm = (rxq_io_count > ctrl_wm_rx);
+  assign fire_tx = link_tx_ready & link_tx_valid;
   assign cs_mode_off = cs_mode == 2'h3;
 
   always @(posedge clock or posedge reset)
@@ -122,8 +128,8 @@ module sirv_qspi_fifo(
       rxen <= 1'h0;
     end else begin
       if (fire_tx) begin
-        rxen <= ~io_link_fmt_iodir;
-      end else if (io_link_rx_valid) begin
+        rxen <= ~ctrl_fmt_iodir;
+      end else if (link_rx_valid) begin
         rxen <= 1'h0;
       end
     end
@@ -132,7 +138,7 @@ module sirv_qspi_fifo(
     if (reset) begin
       cs_mode <= 2'h0;
     end else begin
-      cs_mode <= io_ctrl_cs_mode;
+      cs_mode <= ctrl_cs_mode;
     end
 
 endmodule
