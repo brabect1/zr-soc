@@ -200,22 +200,22 @@ module sirv_flash_qspi_top(
     .in_tl_a_ready(         tl_ins_a_ready),
     .in_tl_a_valid(         tl_ins_a_valid),
     .in_tl_a_bits_opcode(   tl_ins_a_bits_opcode),
-    .in_tl_a_bits_param(    tl_ins_a_bits_param),
-    .in_tl_a_bits_size(     tl_ins_a_bits_size),
-    .in_tl_a_bits_source(   tl_ins_a_bits_source),
+    .in_tl_a_bits_param(    tl_ins_a_bits_param), // const 0
+    .in_tl_a_bits_size(     tl_ins_a_bits_size), // const 2
+    .in_tl_a_bits_source(   tl_ins_a_bits_source), // const 0
     .in_tl_a_bits_address(  tl_ins_a_bits_address),
-    .in_tl_a_bits_mask(     tl_ins_a_bits_mask),
+    .in_tl_a_bits_mask(     tl_ins_a_bits_mask), // const 4'hF
     .in_tl_a_bits_data(     tl_ins_a_bits_data),
     .in_tl_d_ready(         tl_ins_d_ready),
     .in_tl_d_valid(         tl_ins_d_valid),
-    .in_tl_d_bits_opcode(   tl_ins_d_bits_opcode),
-    .in_tl_d_bits_param(    tl_ins_d_bits_param),
-    .in_tl_d_bits_size(     tl_ins_d_bits_size),
-    .in_tl_d_bits_source(   tl_ins_d_bits_source),
-    .in_tl_d_bits_sink(     tl_ins_d_bits_sink),
-    .in_tl_d_bits_addr_lo(  tl_ins_d_bits_addr_lo),
+    .in_tl_d_bits_opcode(   tl_ins_d_bits_opcode), // unused
+    .in_tl_d_bits_param(    tl_ins_d_bits_param), // unused
+    .in_tl_d_bits_size(     tl_ins_d_bits_size), // unused
+    .in_tl_d_bits_source(   tl_ins_d_bits_source), // unused
+    .in_tl_d_bits_sink(     tl_ins_d_bits_sink), // unused
+    .in_tl_d_bits_addr_lo(  tl_ins_d_bits_addr_lo), // unused
     .in_tl_d_bits_data(     tl_ins_d_bits_data),
-    .in_tl_d_bits_error(    tl_ins_d_bits_error),
+    .in_tl_d_bits_error(    tl_ins_d_bits_error), // unused
 
     .out_tl_a_ready(        io_in_0_a_ready),
     .out_tl_a_valid(        io_in_0_a_valid),
@@ -225,7 +225,7 @@ module sirv_flash_qspi_top(
     .out_tl_a_bits_source(  io_in_0_a_bits_source),
     .out_tl_a_bits_address( io_in_0_a_bits_address),
     .out_tl_a_bits_mask(    io_in_0_a_bits_mask),
-    .out_tl_a_bits_data(    io_in_0_a_bits_data),
+    .out_tl_a_bits_data(    io_in_0_a_bits_data), // const 8'h00
     .out_tl_d_ready(        io_in_0_d_ready),
     .out_tl_d_valid(        io_in_0_d_valid),
     .out_tl_d_bits_opcode(  io_in_0_d_bits_opcode),
