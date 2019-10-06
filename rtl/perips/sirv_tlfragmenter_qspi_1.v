@@ -28,44 +28,44 @@
 module sirv_tlfragmenter_qspi_1(
   input   clock,
   input   reset,
-  output  io_in_0_a_ready,
-  input   io_in_0_a_valid,
-  input  [2:0] io_in_0_a_bits_opcode,
-  input  [2:0] io_in_0_a_bits_param,
-  input  [2:0] io_in_0_a_bits_size,
-  input  [1:0] io_in_0_a_bits_source,
-  input  [29:0] io_in_0_a_bits_address,
-  input   io_in_0_a_bits_mask,
-  input  [7:0] io_in_0_a_bits_data,
-  input   io_in_0_d_ready,
-  output  io_in_0_d_valid,
-  output [2:0] io_in_0_d_bits_opcode,
-  output [1:0] io_in_0_d_bits_param,
-  output [2:0] io_in_0_d_bits_size,
-  output [1:0] io_in_0_d_bits_source,
-  output  io_in_0_d_bits_sink,
-  output  io_in_0_d_bits_addr_lo,
-  output [7:0] io_in_0_d_bits_data,
-  output  io_in_0_d_bits_error,
-  input   io_out_0_a_ready,
-  output  io_out_0_a_valid,
-  output [2:0] io_out_0_a_bits_opcode,
-  output [2:0] io_out_0_a_bits_param,
-  output [2:0] io_out_0_a_bits_size,
-  output [6:0] io_out_0_a_bits_source,
-  output [29:0] io_out_0_a_bits_address,
-  output  io_out_0_a_bits_mask,
-  output [7:0] io_out_0_a_bits_data,
-  output  io_out_0_d_ready,
-  input   io_out_0_d_valid,
-  input  [2:0] io_out_0_d_bits_opcode,
-  input  [1:0] io_out_0_d_bits_param,
-  input  [2:0] io_out_0_d_bits_size,
-  input  [6:0] io_out_0_d_bits_source,
-  input   io_out_0_d_bits_sink,
-  input   io_out_0_d_bits_addr_lo,
-  input  [7:0] io_out_0_d_bits_data,
-  input   io_out_0_d_bits_error
+  output  in_tl_a_ready,
+  input   in_tl_a_valid,
+  input  [2:0] in_tl_a_bits_opcode,
+  input  [2:0] in_tl_a_bits_param,
+  input  [2:0] in_tl_a_bits_size,
+  input  [1:0] in_tl_a_bits_source,
+  input  [29:0] in_tl_a_bits_address,
+  input   in_tl_a_bits_mask,
+  input  [7:0] in_tl_a_bits_data,
+  input   in_tl_d_ready,
+  output  in_tl_d_valid,
+  output [2:0] in_tl_d_bits_opcode,
+  output [1:0] in_tl_d_bits_param,
+  output [2:0] in_tl_d_bits_size,
+  output [1:0] in_tl_d_bits_source,
+  output  in_tl_d_bits_sink,
+  output  in_tl_d_bits_addr_lo,
+  output [7:0] in_tl_d_bits_data,
+  output  in_tl_d_bits_error,
+  input   out_tl_a_ready,
+  output  out_tl_a_valid,
+  output [2:0] out_tl_a_bits_opcode,
+  output [2:0] out_tl_a_bits_param,
+  output [2:0] out_tl_a_bits_size,
+  output [6:0] out_tl_a_bits_source,
+  output [29:0] out_tl_a_bits_address,
+  output  out_tl_a_bits_mask,
+  output [7:0] out_tl_a_bits_data,
+  output  out_tl_d_ready,
+  input   out_tl_d_valid,
+  input  [2:0] out_tl_d_bits_opcode,
+  input  [1:0] out_tl_d_bits_param,
+  input  [2:0] out_tl_d_bits_size,
+  input  [6:0] out_tl_d_bits_source,
+  input   out_tl_d_bits_sink,
+  input   out_tl_d_bits_addr_lo,
+  input  [7:0] out_tl_d_bits_data,
+  input   out_tl_d_bits_error
 );
   reg [4:0] acknum;
   reg [2:0] dOrig;
@@ -111,50 +111,50 @@ module sirv_tlfragmenter_qspi_1(
   sirv_repeater_6 u_repeater (
     .clock(clock),
     .reset(reset),
-    .io_repeat(io_repeat),
-    .io_full(repeater_io_full),
-    .io_enq_ready(repeater_io_enq_ready),
-    .io_enq_valid(io_in_0_a_valid),
-    .io_enq_bits_opcode(io_in_0_a_bits_opcode),
-    .io_enq_bits_param(io_in_0_a_bits_param),
-    .io_enq_bits_size(io_in_0_a_bits_size),
-    .io_enq_bits_source(io_in_0_a_bits_source),
-    .io_enq_bits_address(io_in_0_a_bits_address),
-    .io_enq_bits_mask(io_in_0_a_bits_mask),
-    .io_enq_bits_data(io_in_0_a_bits_data),
-    .io_deq_ready(io_out_0_a_ready),
-    .io_deq_valid(repeater_io_deq_valid),
-    .io_deq_bits_opcode(repeater_io_deq_bits_opcode),
-    .io_deq_bits_param(repeater_io_deq_bits_param),
-    .io_deq_bits_size(repeater_io_deq_bits_size),
-    .io_deq_bits_source(repeater_io_deq_bits_source),
-    .io_deq_bits_address(repeater_io_deq_bits_address),
-    .io_deq_bits_mask(repeater_io_deq_bits_mask),
-    .io_deq_bits_data(repeater_io_deq_bits_data)
+    .rpt(io_repeat),
+    .full(repeater_io_full),
+    .enq_ready(repeater_io_enq_ready),
+    .enq_valid(in_tl_a_valid),
+    .enq_bits_opcode(in_tl_a_bits_opcode),
+    .enq_bits_param(in_tl_a_bits_param),
+    .enq_bits_size(in_tl_a_bits_size),
+    .enq_bits_source(in_tl_a_bits_source),
+    .enq_bits_address(in_tl_a_bits_address),
+    .enq_bits_mask(in_tl_a_bits_mask),
+    .enq_bits_data(in_tl_a_bits_data),
+    .deq_ready(out_tl_a_ready),
+    .deq_valid(repeater_io_deq_valid),
+    .deq_bits_opcode(repeater_io_deq_bits_opcode),
+    .deq_bits_param(repeater_io_deq_bits_param),
+    .deq_bits_size(repeater_io_deq_bits_size),
+    .deq_bits_source(repeater_io_deq_bits_source),
+    .deq_bits_address(repeater_io_deq_bits_address),
+    .deq_bits_mask(repeater_io_deq_bits_mask),
+    .deq_bits_data(repeater_io_deq_bits_data)
   );
-  assign io_in_0_a_ready = repeater_io_enq_ready;
-  assign io_in_0_d_valid = io_out_0_d_valid;
-  assign io_in_0_d_bits_opcode = io_out_0_d_bits_opcode;
-  assign io_in_0_d_bits_param = io_out_0_d_bits_param;
-  assign io_in_0_d_bits_size = (dFirst ? dFirst_size : dOrig);
-  assign io_in_0_d_bits_source = io_out_0_d_bits_source[6:5];
-  assign io_in_0_d_bits_sink = io_out_0_d_bits_sink;
-  assign io_in_0_d_bits_addr_lo = (io_out_0_d_bits_addr_lo & (~ dsizeOH1));
-  assign io_in_0_d_bits_data = io_out_0_d_bits_data;
-  assign io_in_0_d_bits_error = io_out_0_d_bits_error;
-  assign io_out_0_a_valid = repeater_io_deq_valid;
-  assign io_out_0_a_bits_opcode = repeater_io_deq_bits_opcode;
-  assign io_out_0_a_bits_param = repeater_io_deq_bits_param;
-  assign io_out_0_a_bits_size = aFrag;
-  assign io_out_0_a_bits_source = ({repeater_io_deq_bits_source,new_gennum});
-  assign io_out_0_a_bits_address = repeater_io_deq_bits_address | {25'd0, T_1528};
-  assign io_out_0_a_bits_mask = (repeater_io_full ? 1'h1 : io_in_0_a_bits_mask);
-  assign io_out_0_a_bits_data = io_in_0_a_bits_data;
-  assign io_out_0_d_ready = io_in_0_d_ready;
+  assign in_tl_a_ready = repeater_io_enq_ready;
+  assign in_tl_d_valid = out_tl_d_valid;
+  assign in_tl_d_bits_opcode = out_tl_d_bits_opcode;
+  assign in_tl_d_bits_param = out_tl_d_bits_param;
+  assign in_tl_d_bits_size = (dFirst ? dFirst_size : dOrig);
+  assign in_tl_d_bits_source = out_tl_d_bits_source[6:5];
+  assign in_tl_d_bits_sink = out_tl_d_bits_sink;
+  assign in_tl_d_bits_addr_lo = out_tl_d_bits_addr_lo & ~dsizeOH1;
+  assign in_tl_d_bits_data = out_tl_d_bits_data;
+  assign in_tl_d_bits_error = out_tl_d_bits_error;
+  assign out_tl_a_valid = repeater_io_deq_valid;
+  assign out_tl_a_bits_opcode = repeater_io_deq_bits_opcode;
+  assign out_tl_a_bits_param = repeater_io_deq_bits_param;
+  assign out_tl_a_bits_size = aFrag;
+  assign out_tl_a_bits_source = {repeater_io_deq_bits_source,new_gennum};
+  assign out_tl_a_bits_address = repeater_io_deq_bits_address | {25'd0, T_1528};
+  assign out_tl_a_bits_mask = repeater_io_full | in_tl_a_bits_mask;
+  assign out_tl_a_bits_data = in_tl_a_bits_data;
+  assign out_tl_d_ready = in_tl_d_ready;
   assign dFirst = acknum == 5'h0;
-  assign dsizeOH1 = ~(8'h1 << io_out_0_d_bits_size);
+  assign dsizeOH1 = ~(8'h1 << out_tl_d_bits_size); // maps 0->0, other->1
   assign GEN_5 = {4'd0, dsizeOH1};
-  assign dFirst_acknum = io_out_0_d_bits_source[4:0] | GEN_5;
+  assign dFirst_acknum = out_tl_d_bits_source[4:0] | GEN_5;
   assign T_1430 = {dFirst_acknum,1'b1};
   assign T_1432 = {1'h0,dFirst_acknum};
   assign T_1433 = ~ T_1432;
@@ -166,7 +166,7 @@ module sirv_tlfragmenter_qspi_1(
   assign T_1444 = T_1439[3:2] | T_1439[1:0];
   assign T_1446 = {T_1443,T_1444[1]};
   assign dFirst_size = {T_1438,T_1446};
-  assign T_1447 = io_out_0_d_ready & io_out_0_d_valid;
+  assign T_1447 = out_tl_d_ready & out_tl_d_valid;
   assign T_1494 = repeater_io_deq_bits_size > 3'h0;
   assign aFrag = T_1494 ? 3'h0 : repeater_io_deq_bits_size;
   assign T_1497 = 12'h1f << repeater_io_deq_bits_size;
@@ -195,7 +195,7 @@ module sirv_tlfragmenter_qspi_1(
   always @(posedge clock or posedge reset) 
     if (reset) begin
       gennum <= 5'h0;
-    end else if ((io_out_0_a_ready & io_out_0_a_valid)) begin
+    end else if ((out_tl_a_ready & out_tl_a_valid)) begin
       gennum <= new_gennum;
     end
 
@@ -272,9 +272,9 @@ module sirv_tlfragmenter_qspi_1(
   wire  T_1418;
   wire  T_1417;
   wire [4:0] T_1415;
-  assign T_1415 = io_out_0_d_bits_source[4:0] & GEN_5;
+  assign T_1415 = out_tl_d_bits_source[4:0] & GEN_5;
   assign T_1417 = T_1415 == 5'h0;
-  assign T_1418 = ~io_out_0_d_valid | T_1417;
+  assign T_1418 = ~out_tl_d_valid | T_1417;
   assign T_1419 = T_1418 | reset;
   assign T_1542 = ~repeater_io_full | repeater_io_deq_bits_mask;
   assign T_1543 = T_1542 | reset;
