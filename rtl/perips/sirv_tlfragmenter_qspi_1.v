@@ -68,14 +68,12 @@ module sirv_tlfragmenter_qspi_1(
   input   out_tl_d_bits_error
 );
   reg [4:0] acknum;
-  reg [2:0] dOrig;
+  reg [2:0] dSaved_size;
   wire  dFirst;
   wire [7:0] T_1410;
   wire  dsizeOH1;
   wire [4:0] GEN_5;
   wire [4:0] dFirst_acknum;
-  wire [5:0] T_1430;
-  wire [5:0] T_1432;
   wire [5:0] T_1434;
   wire  T_1438;
   wire [3:0] GEN_9;
@@ -94,12 +92,9 @@ module sirv_tlfragmenter_qspi_1(
   wire [29:0] repeater_deq_bits_address;
   wire  repeater_deq_bits_mask;
 //  wire [7:0] repeater_deq_bits_data;
-  wire [2:0] aFrag;
   wire [4:0] a_bits_addr_lo_mask; // masks which bits of `a_bits_addr_lo` are used; derives from `in_tl_a_bits_size` (indirectly through `repeater_deq_bits_size`)
-  wire  aFragOH1;
   reg [4:0] gennum;
   wire  aFirst;
-  wire [4:0] old_gennum;
   wire [4:0] new_gennum;
   wire  repeater_repeat;
   wire [4:0] a_bits_addr_lo;
@@ -131,7 +126,7 @@ module sirv_tlfragmenter_qspi_1(
   assign in_tl_d_valid = out_tl_d_valid;
   assign in_tl_d_bits_opcode = out_tl_d_bits_opcode;
   assign in_tl_d_bits_param = out_tl_d_bits_param;
-  assign in_tl_d_bits_size = (dFirst ? dFirst_size : dOrig);
+  assign in_tl_d_bits_size = (dFirst ? dFirst_size : dSaved_size);
   assign in_tl_d_bits_source = out_tl_d_bits_source[6:5];
   assign in_tl_d_bits_sink = out_tl_d_bits_sink;
   assign in_tl_d_bits_addr_lo = out_tl_d_bits_addr_lo & ~dsizeOH1;
@@ -140,19 +135,17 @@ module sirv_tlfragmenter_qspi_1(
   assign out_tl_a_valid = repeater_deq_valid;
   assign out_tl_a_bits_opcode = repeater_deq_bits_opcode;
   assign out_tl_a_bits_param = repeater_deq_bits_param;
-  assign out_tl_a_bits_size = aFrag;
+  assign out_tl_a_bits_size = 3'h0;
   assign out_tl_a_bits_source = {repeater_deq_bits_source,new_gennum};
   assign out_tl_a_bits_address = repeater_deq_bits_address | {25'd0, a_bits_addr_lo};
   assign out_tl_a_bits_mask = repeater_full | in_tl_a_bits_mask;
   assign out_tl_a_bits_data = in_tl_a_bits_data;
   assign out_tl_d_ready = in_tl_d_ready;
   assign dFirst = acknum == 5'h0;
-  assign dsizeOH1 = ~(1'h1 << out_tl_d_bits_size); // maps 0->0, other->1
+  assign dsizeOH1 = out_tl_d_bits_size != 3'h0; // maps 0->0, other->1
   assign GEN_5 = {4'd0, dsizeOH1};
   assign dFirst_acknum = out_tl_d_bits_source[4:0] | GEN_5;
-  assign T_1430 = {dFirst_acknum,1'b1};
-  assign T_1432 = {1'h0,dFirst_acknum};
-  assign T_1434 = T_1430 & ~T_1432;
+  assign T_1434 = {dFirst_acknum,1'b1} & {1'h1,~dFirst_acknum};
   assign T_1438 = T_1434[5:4] != 2'h0;
   assign GEN_9 = {2'd0, T_1434[5:4]};
   assign T_1439 = GEN_9 | T_1434[3:0];
@@ -160,30 +153,28 @@ module sirv_tlfragmenter_qspi_1(
   assign T_1444 = T_1439[3:2] | T_1439[1:0];
   assign T_1446 = {T_1443,T_1444[1]};
   assign dFirst_size = {T_1438,T_1446};
-  // The following seems to ultimately yield 0.
-  assign aFrag = (repeater_deq_bits_size > 3'h0) ? 3'h0 : repeater_deq_bits_size;
   assign a_bits_addr_lo_mask = ~(5'h1f << repeater_deq_bits_size); // maps 0->5'b00000, 1->5'b00001, 2->5'b00011, 3->5'b00111,
                                                         //      4->5'b01111, other->5'b11111
-  assign aFragOH1 = aFrag != 3'h0;
   assign aFirst = gennum == 5'h0;
-  assign old_gennum = aFirst ? a_bits_addr_lo_mask : (gennum - 1'h1);
-  assign new_gennum = old_gennum & ~{4'd0, aFragOH1};
+  assign new_gennum = aFirst ? a_bits_addr_lo_mask : (gennum - 1'h1);
   assign repeater_repeat = new_gennum != 5'h0;
   assign a_bits_addr_lo = ~new_gennum & a_bits_addr_lo_mask;
 
   always @(posedge clock or posedge reset) 
     if (reset) begin
       acknum <= 5'h0;
-      dOrig <= 3'b0;
+      dSaved_size <= 3'b0;
     end else if (out_tl_d_ready & out_tl_d_valid) begin
         if (dFirst) begin
           acknum <= dFirst_acknum;
-          dOrig <= dFirst_size;
+          dSaved_size <= dFirst_size;
         end else begin
           acknum <= acknum - 5'h1;
         end
     end
 
+  // Counts down the number of bytes to "fragment". The inverted value
+  // is used as lowest address bits.
   always @(posedge clock or posedge reset) 
     if (reset) begin
       gennum <= 5'h0;
