@@ -23,11 +23,10 @@
                                                                          
                                                                          
                                                                          
-
 module sirv_repeater_6(
   input   clock,
   input   reset,
-  input   rpt,
+  input   repeat_en,
   output  full,
   output  enq_ready,
   input   enq_valid,
@@ -49,6 +48,7 @@ module sirv_repeater_6(
   output [7:0] deq_bits_data
 );
   reg  full;
+  wire save;
   reg [2:0] saved_opcode;
   reg [2:0] saved_param;
   reg [2:0] saved_size;
@@ -56,8 +56,10 @@ module sirv_repeater_6(
   reg [29:0] saved_address;
   reg  saved_mask;
   reg [7:0] saved_data;
-  assign full = full;
+  // using `full` to gate indicating "ready for new data" once full
   assign enq_ready = deq_ready & ~full;
+  // output data valid when either input data ready or there are
+  // saved data (i.e. full)
   assign deq_valid = enq_valid | full;
   assign deq_bits_opcode = (full ? saved_opcode : enq_bits_opcode);
   assign deq_bits_param = (full ? saved_param : enq_bits_param);
@@ -67,13 +69,15 @@ module sirv_repeater_6(
   assign deq_bits_mask = (full ? saved_mask : enq_bits_mask);
   assign deq_bits_data = (full ? saved_data : enq_bits_data);
 
+  assign save = enq_ready & enq_valid & repeat_en;
+
   always @(posedge clock or posedge reset)
     if (reset) begin
       full <= 1'h0;
     end else begin
-      if (deq_ready & deq_valid & ~rpt) begin
+      if (deq_ready & deq_valid & ~repeat_en) begin
         full <= 1'h0;
-      end else if (enq_ready & enq_valid & rpt) begin
+      end else if (save) begin
         full <= 1'h1;
       end
     end
@@ -89,7 +93,7 @@ module sirv_repeater_6(
     saved_mask <= 1'b0;
     saved_data <= 8'b0;
   end
-  else if (enq_ready & enq_valid & rpt) begin
+  else if (save) begin
     saved_opcode <= enq_bits_opcode;
     saved_param <= enq_bits_param;
     saved_size <= enq_bits_size;
