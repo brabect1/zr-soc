@@ -74,7 +74,7 @@ module sirv_flash_qspi(
   input  [6:0] tl_ins_a_bits_source,
   input  [29:0] tl_ins_a_bits_address,
   input   tl_ins_a_bits_mask,
-  input  [7:0] tl_ins_a_bits_data,
+  input  [7:0] tl_ins_a_bits_data, // unused
   input   tl_ins_d_ready,
   output  tl_ins_d_valid,
   output [2:0] tl_ins_d_bits_opcode,
